@@ -39,7 +39,7 @@ class FeatureEngineering(BaseEstimator, TransformerMixin):
 
             #Creating lag feature
             df = df.sort_values(['meal_id','center_id','week'])
-            for lag in [1,2,3,4]:
+            for lag in [1,2,3,4,5,10]:
                 df[f'lag_{lag}'] = df.groupby(['meal_id','center_id'])['num_orders'].shift(lag).fillna(0)
 
             rolling_window = df.groupby(['meal_id','center_id'])['num_orders'].shift(1).rolling(window=4, min_periods=1)
@@ -63,9 +63,20 @@ class FeatureEngineering(BaseEstimator, TransformerMixin):
             df['emailer_for_promotion'] = df['emailer_for_promotion'].astype('object')
             df['homepage_featured'] = df['homepage_featured'].astype('object')
 
-            # df['base_price_min'] = df.groupby('meal_id')['base_price'].transform('min')
-            # df['base_price_max'] = df.groupby('meal_id')['base_price'].transform('max')
-            # df['base_price_mean'] = df.groupby('meal_id')['base_price'].transform('mean')
+            df['base_price_max'] = df.groupby('meal_id')['base_price'].transform('max')
+            df['base_price_min'] = df.groupby('meal_id')['base_price'].transform('min')
+            df['base_price_mean'] = round(df.groupby('meal_id')['base_price'].transform('mean'),4)
+            
+            df['meal_price_max'] = df.groupby('meal_id')['checkout_price'].transform('max')
+            df['meal_price_min'] = df.groupby('meal_id')['checkout_price'].transform('min')
+            df['meal_price_mean'] = round(df.groupby('meal_id')['checkout_price'].transform('mean'),4)
+            
+            df['center_cat_count'] = df.groupby(['category','center_id'])['num_orders'].transform('count')
+            df['center_cat_price_rank'] = df.groupby(['category','center_id','meal_id'])['base_price'].rank(method='dense').astype('int64')
+            df['center_cat_week_count'] = df.groupby(['category','center_id','week'])['num_orders'].transform('count')
+            df['center_cuisine_count'] = df.groupby(['cuisine','center_id'])['num_orders'].transform('count')
+            df['center_price_rank'] = df.groupby(['meal_id','center_id'])['base_price'].rank(method='dense').astype('int64')
+
 
             return df
 

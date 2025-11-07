@@ -55,20 +55,20 @@ class ModelTrainer:
                 "Random Forest": {
                     'n_estimators': randint(50, 250),  
                     'max_features': ['sqrt', 'log2'],
-                    'max_depth': randint(6, 20),     
+                    'max_depth': randint(6, 14),     
                 },
                 "LGBM Regressor": {
                     'boosting_type': ['gbdt'],
                     'learning_rate': uniform(0.01, 0.2),
                     'n_estimators': randint(50, 250),
-                    'max_depth': randint(6, 20),
+                    'max_depth': randint(6, 16),
                     'device_type': ['gpu']  
                 },
                 "Linear Regression": {},
                 "XGBRegressor": {
                     'booster': ['gbtree'], 
-                    'tree_method': ['gpu_hist'],
-                    'max_depth': randint(4, 18),
+                    'tree_method': ['hist'],
+                    'max_depth': randint(4, 16),
                     'learning_rate': uniform(0.01, 0.2),
                     'n_estimators': randint(50, 250),
                     'device': ['cuda']
