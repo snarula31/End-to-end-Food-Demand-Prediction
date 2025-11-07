@@ -1,0 +1,17 @@
+pandas
+numpy
+seaborn
+matplotlib
+scikit-learn
+catboost
+xgboost
+lightgbm
+dill
+imbalanced-learn
+fastapi
+uvicorn[standard]
+pydantic
+python-multipart
+flask
+streamlit
+-e .
