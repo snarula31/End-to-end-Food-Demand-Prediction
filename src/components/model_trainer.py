@@ -55,7 +55,7 @@ class ModelTrainer:
                 "Random Forest": {
                     'n_estimators': randint(50, 250),  
                     'max_features': ['sqrt', 'log2'],
-                    'max_depth': randint(6, 14),     
+                    'max_depth': randint(6, 16),     
                 },
                 "LGBM Regressor": {
                     'boosting_type': ['gbdt'],
@@ -156,4 +156,5 @@ class ModelTrainer:
 # further reduce model training time 
 # -> find a fix for long training time of xgboost even on GPU
 #  use different transformation techniques for target variable to make it a normal distribution (quantile transformation)
-# 
+# check implentaion od ewma on google ai studio
+# fix features using expanding window technique

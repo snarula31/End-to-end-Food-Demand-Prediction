@@ -27,10 +27,10 @@ def save_object(file_path, obj):
 def evaluate_models(X_train, y_train,X_test,y_test,models,param):
     try:
         report_r2 = {}
-        # report_mae = {}
-        # report_mse = {}
-        # report_rmse = {}
-        # report_mape = {}
+        report_mae = {}
+        report_mse = {}
+        report_rmse = {}
+        report_mape = {}
         best_models = {}
 
         for i in range(len(list(models))):
@@ -63,31 +63,31 @@ def evaluate_models(X_train, y_train,X_test,y_test,models,param):
             train_model_r2_score = r2_score(y_train, y_train_pred)
             test_model_r2_score = r2_score(y_test, y_test_pred)
             
-            # train_model_mae = mean_absolute_error(y_train, y_train_pred)
-            # test_model_mae = mean_absolute_error(y_test, y_test_pred)
+            train_model_mae = mean_absolute_error(y_train, y_train_pred)
+            test_model_mae = mean_absolute_error(y_test, y_test_pred)
 
-            # train_model_mse = mean_squared_error(y_train, y_train_pred)
-            # test_model_mse = mean_squared_error(y_test, y_test_pred)
+            train_model_mse = mean_squared_error(y_train, y_train_pred)
+            test_model_mse = mean_squared_error(y_test, y_test_pred)
 
-            # train_model_rmse = np.sqrt(train_model_mse)
-            # test_model_rmse = np.sqrt(test_model_mse)
+            train_model_rmse = np.sqrt(train_model_mse)
+            test_model_rmse = np.sqrt(test_model_mse)
 
-            # train_model_mape = mean_absolute_percentage_error(y_train, y_train_pred)
-            # test_model_mape = mean_absolute_percentage_error(y_test, y_test_pred)
+            train_model_mape = mean_absolute_percentage_error(y_train, y_train_pred)
+            test_model_mape = mean_absolute_percentage_error(y_test, y_test_pred)
 
 
             report_r2[list(models.keys())[i]] = test_model_r2_score
-            # report_mae[list(models.keys())[i]] = test_model_mae
-            # report_mse[list(models.keys())[i]] = test_model_mse
-            # report_rmse[list(models.keys())[i]] = test_model_rmse
-            # report_mape[list(models.keys())[i]] = test_model_mape
+            report_mae[list(models.keys())[i]] = test_model_mae
+            report_mse[list(models.keys())[i]] = test_model_mse
+            report_rmse[list(models.keys())[i]] = test_model_rmse
+            report_mape[list(models.keys())[i]] = test_model_mape
             best_models[list(models.keys())[i]] = best_estimator
             
         logging.info(f'Model report_r2:{report_r2}')
-        # logging.info(f'Model report_mae:{report_mae}')
-        # logging.info(f'Model report_mse:{report_mse}')
-        # logging.info(f'Model report_rmse:{report_rmse}')
-        # logging.info(f'Model report_mape:{report_mape}')
+        logging.info(f'Model report_mae:{report_mae}')
+        logging.info(f'Model report_mse:{report_mse}')
+        logging.info(f'Model report_rmse:{report_rmse}')
+        logging.info(f'Model report_mape:{report_mape}')
 
         return report_r2,best_models
 

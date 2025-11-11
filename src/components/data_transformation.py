@@ -12,6 +12,7 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
+import category_encoders as ce
 
 
 from components.feature_engineering import FeatureEngineering
@@ -28,15 +29,17 @@ class DataTransformation:
 
     def get_data_transformer_object(self):
         try:
-            numerical_columns = ['week','center_id', 'meal_id', 'checkout_price', 'base_price',
-                                'region_code', 'op_area', 'discount_amount',
-                                'discount_percentage', 'discount_y_n', 'weekly_base_price_change',
-                                'weekly_checkout_price_change', 'week_of_year', 'quarter', 'month',
-                                '4_week_avg_checkout_price', '4_week_avg_base_price', 'lag_1', 'lag_2',
-                                'lag_3', 'lag_4', 'rolling_4_week_mean','rolling_std','rolling_min',
-                                'rolling_max','rolling_median']
-            categorical_columns = ['emailer_for_promotion', 'homepage_featured', 'center_type', 'category',
-                                   'cuisine', 'city_cat']
+            numerical_columns = ['week','checkout_price', 'base_price', 'op_area', 'discount_amount',
+                                'discount_percentage','weekly_base_price_change','weekly_checkout_price_change','week_of_year',
+                                'lag_1', 'lag_2','lag_3', 'lag_4','lag_5','lag_10','lag_15', 
+                                'price_vs_category_avg','expanding_base_price_mean', 'expanding_base_price_max',
+                                'expanding_base_price_min', 'expanding_checkout_price_mean','expanding_checkout_price_max',
+                                'expanding_checkout_price_min','center_price_rank','meal_price_rank','week_sin', 'week_cos',
+                                'ewma_2_week_orders','ewma_4_week_orders', 'ewma_5_week_orders', 'ewma_10_week_orders','ewma_15_week_orders']
+            
+            ohe_categorical_columns = ['emailer_for_promotion', 'homepage_featured','center_type', 'category','cuisine']
+            
+            target_en_categorical_columns = ['center_id','region_code','city_code','meal_id']
 
             # Define the numerical and categorical transformers
             numerical_transformer = Pipeline(steps=[
@@ -44,7 +47,7 @@ class DataTransformation:
                 ('scaler', StandardScaler())
             ])
 
-            categorical_transformer = Pipeline(steps=[
+            ohe_categorical_transformer = Pipeline(steps=[
                 ('imputer', SimpleImputer(strategy='most_frequent', fill_value='missing')),
                 ('onehot', OneHotEncoder(handle_unknown='ignore'))
             ])
@@ -53,7 +56,8 @@ class DataTransformation:
             preprocessor = ColumnTransformer(
                 transformers=[
                     ('num', numerical_transformer, numerical_columns),
-                    ('cat', categorical_transformer, categorical_columns)
+                    ('cat', ohe_categorical_transformer, ohe_categorical_columns),
+                    ('target_cat',ce.TargetEncoder(), target_en_categorical_columns)
                 ],
                 remainder='passthrough'
             )
@@ -107,10 +111,10 @@ class DataTransformation:
             categorical_columns = ['emailer_for_promotion', 'homepage_featured', 'center_type', 'category',
                                    'cuisine', 'city_cat']
 
-            input_feature_train_df = train_df.drop(columns=['id','city_code','num_orders'],axis=1)#x_train
+            input_feature_train_df = train_df.drop(columns=['id','num_orders'],axis=1)#x_train
             target_feature_train_df = np.log1p(train_df['num_orders'])#y_train
 
-            input_feature_test_df = test_df.drop(columns=['id','city_code','num_orders'],axis=1)#x_test
+            input_feature_test_df = test_df.drop(columns=['id','num_orders'],axis=1)#x_test
             target_feature_test_df = np.log1p(test_df['num_orders'])#y_test
 
             logging.info(f"Input feature train df: {input_feature_train_df.head()}")
@@ -120,7 +124,7 @@ class DataTransformation:
 
             logging.info("Applying preprocessing object on training and test dataframes")
 
-            input_feature_train_arr = preprocessing_obj.fit_transform(input_feature_train_df)
+            input_feature_train_arr = preprocessing_obj.fit_transform(input_feature_train_df,target_feature_train_df)
             input_feature_test_arr = preprocessing_obj.transform(input_feature_test_df)
 
             train_arr = np.c_[input_feature_train_arr, np.array(target_feature_train_df)]
