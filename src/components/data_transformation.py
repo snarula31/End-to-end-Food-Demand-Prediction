@@ -34,7 +34,7 @@ class DataTransformation:
                                 'lag_1', 'lag_2','lag_3', 'lag_4','lag_5','lag_10','lag_15', 
                                 'price_vs_category_avg','expanding_base_price_mean', 'expanding_base_price_max',
                                 'expanding_base_price_min', 'expanding_checkout_price_mean','expanding_checkout_price_max',
-                                'expanding_checkout_price_min','center_price_rank','meal_price_rank','week_sin', 'week_cos',
+                                'expanding_checkout_price_min','center_price_rank','meal_price_rank','week_sin', 'week_cos','ewma_1_week_orders',
                                 'ewma_2_week_orders','ewma_4_week_orders', 'ewma_5_week_orders', 'ewma_10_week_orders','ewma_15_week_orders']
             
             ohe_categorical_columns = ['emailer_for_promotion', 'homepage_featured','center_type', 'category','cuisine']
@@ -62,7 +62,6 @@ class DataTransformation:
                 remainder='passthrough'
             )
 
-            # logging.info("Data transformation pipeline created successfully.")
             return preprocessor
 
         except Exception as e:
@@ -98,18 +97,17 @@ class DataTransformation:
 
             preprocessing_obj = self.get_data_transformer_object()
 
-            # train_df.drop()
-            # target_column_name = np.log1p("num_orders")
-            numerical_columns = ['week', 'center_id', 'meal_id', 'checkout_price', 'base_price',
-                                'region_code', 'op_area', 'discount_amount',
-                                'discount_percentage', 'discount_y_n', 'weekly_base_price_change',
-                                'weekly_checkout_price_change', 'week_of_year', 'quarter', 'month',
-                                '4_week_avg_checkout_price', '4_week_avg_base_price', 'lag_1', 'lag_2',
-                                'lag_3', 'lag_4', 'rolling_4_week_mean','rolling_std','rolling_min',
-                                'rolling_max','rolling_median']
+
+            # numerical_columns = ['week', 'center_id', 'meal_id', 'checkout_price', 'base_price',
+            #                     'region_code', 'op_area', 'discount_amount',
+            #                     'discount_percentage', 'discount_y_n', 'weekly_base_price_change',
+            #                     'weekly_checkout_price_change', 'week_of_year', 'quarter', 'month',
+            #                     '4_week_avg_checkout_price', '4_week_avg_base_price', 'lag_1', 'lag_2',
+            #                     'lag_3', 'lag_4', 'rolling_4_week_mean','rolling_std','rolling_min',
+            #                     'rolling_max','rolling_median']
             
-            categorical_columns = ['emailer_for_promotion', 'homepage_featured', 'center_type', 'category',
-                                   'cuisine', 'city_cat']
+            # categorical_columns = ['emailer_for_promotion', 'homepage_featured', 'center_type', 'category',
+            #                        'cuisine', 'city_cat']
 
             input_feature_train_df = train_df.drop(columns=['id','num_orders'],axis=1)#x_train
             target_feature_train_df = np.log1p(train_df['num_orders'])#y_train

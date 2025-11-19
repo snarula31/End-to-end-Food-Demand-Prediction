@@ -53,31 +53,33 @@ class ModelTrainer:
 
             params = {
                 "Random Forest": {
-                    'n_estimators': randint(50, 250),  
-                    'max_features': ['sqrt', 'log2'],
-                    'max_depth': randint(6, 16),     
+                    'n_estimators': [100,150,200],  
+                    'max_features': ['sqrt'],
+                    'max_depth': [7,8,9],
+                    'min_samples_leaf': [2,3,4],     
                 },
                 "LGBM Regressor": {
                     'boosting_type': ['gbdt'],
-                    'learning_rate': uniform(0.01, 0.2),
-                    'n_estimators': randint(50, 250),
-                    'max_depth': randint(6, 16),
+                    'learning_rate': [0.01,0.1,0.13,0.16],
+                    'n_estimators': [100,150,200],
+                    'max_depth': [7,8,9],
                     'device_type': ['gpu']  
                 },
                 "Linear Regression": {},
                 "XGBRegressor": {
                     'booster': ['gbtree'], 
                     'tree_method': ['hist'],
-                    'max_depth': randint(4, 16),
-                    'learning_rate': uniform(0.01, 0.2),
-                    'n_estimators': randint(50, 250),
+                    'max_depth': [7,8,9],
+                    'learning_rate': [0.01,0.1,0.14],
+                    'n_estimators': [50,100,150,200,],
                     'device': ['cuda']
                 },
                 "CatBoosting Regressor": {
-                    'depth': randint(6, 16),
-                    'learning_rate': uniform(0.01, 0.2),
-                    'iterations': randint(50, 250),
-                    'l2_leaf_reg': randint(1, 10),
+                    'max_depth': [7,8,9],
+                    'learning_rate': [0.01,0.1,0.12],
+                    'iterations': [100,150,200,250],
+                    'l2_leaf_reg': [4,6,8],
+                    'loss_function': ['RMSE'],
                 }
             }
 
@@ -99,13 +101,15 @@ class ModelTrainer:
             logging.info("Model training initiated")
             logging.info("Evaluating models")
 
-            model_report,best_trained_models = evaluate_models(X_train=X_train, y_train=y_train, X_test=X_test, y_test=y_test, models=models,param=params)
+            # model_report,best_trained_models = evaluate_models(X_train=X_train, y_train=y_train, X_test=X_test, y_test=y_test, models=models,param=params) --randomizedsearchcv
+            model_report = evaluate_models(X_train=X_train, y_train=y_train, X_test=X_test, y_test=y_test, models=models,param=params)
 
             best_model_score = max(model_report.values())
 
             best_model_name = list(model_report.keys())[list(model_report.values()).index(best_model_score)]
 
-            best_model = best_trained_models[best_model_name]
+            # best_model = best_trained_models[best_model_name]with --randomised searchcv
+            best_model = models[best_model_name]
 
             # if best_model_score < 0.6:
             #     raise CustomException("No best model found")
@@ -158,3 +162,8 @@ class ModelTrainer:
 #  use different transformation techniques for target variable to make it a normal distribution (quantile transformation)
 # check implentaion od ewma on google ai studio
 # fix features using expanding window technique
+
+
+
+# reduce training time further
+# reduce hyperparameter combinations

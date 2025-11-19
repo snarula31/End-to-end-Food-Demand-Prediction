@@ -6,6 +6,8 @@ scikit-learn
 catboost
 xgboost
 lightgbm
+tensorflow
+keras
 dill
 imbalanced-learn
 fastapi
@@ -14,4 +16,4 @@ pydantic
 python-multipart
 flask
 streamlit
--e .
+# -e .

@@ -27,38 +27,46 @@ def save_object(file_path, obj):
 def evaluate_models(X_train, y_train,X_test,y_test,models,param):
     try:
         report_r2 = {}
+        tscv = TimeSeriesSplit(n_splits=3)
         report_mae = {}
         report_mse = {}
         report_rmse = {}
         report_mape = {}
-        best_models = {}
+        # best_models = {}
 
         for i in range(len(list(models))):
             model = list(models.values())[i]
             para=param[list(models.keys())[i]]
 
-            # gs = GridSearchCV(model,para,cv=3,n_jobs=4,verbose=3)
-            # gs.fit(X_train,y_train)
-            tscv = TimeSeriesSplit(n_splits=3)
 
-            rs = RandomizedSearchCV(estimator=model,param_distributions=para,
-                                    n_iter=5,cv=tscv,n_jobs=6,verbose=5,refit=True,random_state=101)
+            logging.info(f'GridSearchCV for {list(models.keys())[i]} started')
+            gs = GridSearchCV(model,para,cv=tscv,n_jobs=6,verbose=3)
+            gs.fit(X_train,y_train)
 
-            logging.info(f'RandomizedSearchCV for {list(models.keys())[i]} started')
+            
+            model.set_params(**gs.best_params_)
+            model.fit(X_train,y_train)
 
-            rs.fit(X_train,y_train)
+            # logging.info(f'RandomizedSearchCV for {list(models.keys())[i]} started')
+            # # rs = RandomizedSearchCV(estimator=model,param_distributions=para,
+            #                         n_iter=5,cv=tscv,n_jobs=6,verbose=5,refit=True,random_state=101)
+
+            
+
+            # rs.fit(X_train,y_train)
 
             # logging.info(f'RandomizedSearchCV results: {rs.cv_results_}')
 
-            logging.info(f'Best parameters for {list(models.keys())[i]}: {rs.best_params_}')
+            # logging.info(f'Best parameters for {list(models.keys())[i]}: {rs.best_params_}')
 
-            # model.set_params(**rs.best_params_)
-            # model.fit(X_train,y_train)
+            # best_estimator = rs.best_estimator_
+            # y_train_pred = best_estimator.predict(X_train)
 
-            best_estimator = rs.best_estimator_
-            y_train_pred = best_estimator.predict(X_train)
+            # y_test_pred = best_estimator.predict(X_test)
 
-            y_test_pred = best_estimator.predict(X_test)
+            y_train_pred = model.predict(X_train)
+            y_test_pred = model.predict(X_test)
+
 
             train_model_r2_score = r2_score(y_train, y_train_pred)
             test_model_r2_score = r2_score(y_test, y_test_pred)
@@ -81,7 +89,7 @@ def evaluate_models(X_train, y_train,X_test,y_test,models,param):
             report_mse[list(models.keys())[i]] = test_model_mse
             report_rmse[list(models.keys())[i]] = test_model_rmse
             report_mape[list(models.keys())[i]] = test_model_mape
-            best_models[list(models.keys())[i]] = best_estimator
+            # best_models[list(models.keys())[i]] = best_estimator
             
         logging.info(f'Model report_r2:{report_r2}')
         logging.info(f'Model report_mae:{report_mae}')
@@ -89,7 +97,7 @@ def evaluate_models(X_train, y_train,X_test,y_test,models,param):
         logging.info(f'Model report_rmse:{report_rmse}')
         logging.info(f'Model report_mape:{report_mape}')
 
-        return report_r2,best_models
+        return report_r2
 
     except Exception as e:
         logging.info(f"Error occurred in evaluate_models function: {e}")

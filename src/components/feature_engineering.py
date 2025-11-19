@@ -119,16 +119,35 @@ class FeatureEngineering(BaseEstimator, TransformerMixin):
             df = df.sort_values(['meal_id','center_id','week'])
             grouped = df.groupby(['meal_id','center_id'])
             
-            spans = [2,4,5,10,15]
+            spans = [1,2,4,5,10,15]
 
             for span in spans:
                 ewma_orders = grouped['num_orders'].shift(1).ewm(span=span, adjust=True,min_periods=1).mean()
                 df[f'ewma_{span}_week_orders'] = round(ewma_orders.fillna(0),4)
 
-
+            
             return df
 
         except Exception as e:
             logging.error(f"Error occurred during feature engineering: {e}")
             raise CustomException(e, sys) from e
 
+    def derive_features_lstm(self,df:pd.DataFrame):\
+        
+        df['city_code'] = df['city_code'].astype('object')
+        df['region_code'] = df['region_code'].astype('object')
+        df['center_id'] = df['center_id'].astype('object')
+        df['meal_id'] = df['meal_id'].astype('object')
+
+        df['discount_amount'] = round(df['base_price'] - df['checkout_price'],4)
+            
+        df['discount_percentage'] = round((df['discount_amount'] / df['base_price']) * 100,4)
+
+        avg_price_cat = df.groupby(['week', 'category'])['base_price'].apply(lambda x: x.mean()).reindex(df .set_index(['week', 'category']).index).values
+
+        df['price_vs_category_avg'] = round(df['base_price'] - avg_price_cat,4)
+
+        df['week_of_year'] = df['week'].apply(lambda x: x % 52 if x % 52 != 0 else 52)
+        df['week_sin'] = np.sin(2 * np.pi * df['week_of_year'] / 52)
+        df['week_cos'] = np.cos(2 * np.pi * df['week_of_year'] / 52)
+        pass   
