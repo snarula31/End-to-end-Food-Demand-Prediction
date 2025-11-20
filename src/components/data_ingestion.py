@@ -11,8 +11,37 @@ from components.data_transformation import DataTransformationConfig
 from components.data_transformation import DataTransformation
 from components.model_trainer import ModelTrainerConfig
 from components.model_trainer import ModelTrainer
-from components.lstm_data_handler import LSTMConfig
-from components.lstm_data_handler import LSTMDataProcessor
+from components.lstm_data_transformation import LSTMConfig
+from components.lstm_data_transformation import LSTMDataProcessor
+from components.lstm_model_trainer import LSTMModelTrainerConfig
+from components.lstm_model_trainer import LSTMModelTrainer
+
+@dataclass
+class DataIngestionConfig:
+    train_data_path: str = os.path.join('artifacts', 'train.csv')
+    test_data_path: str = os.path.join('artifacts', 'test.csv')
+    merged_data_path: str = os.path.join('artifacts', 'merged.csv')
+    final_test_data_path: str = os.path.join('artifacts', 'final_test_set.csv')
+
+class DataIngestion:
+    def __init__(self):
+        self.ingestion_config = DataIngestionConfig()
+
+import os
+import sys
+import numpy as np
+from exception import CustomException
+from logger import logging
+import pandas as pd
+from dataclasses import dataclass 
+from sklearn.model_selection import train_test_split
+
+from components.data_transformation import DataTransformationConfig
+from components.data_transformation import DataTransformation
+from components.model_trainer import ModelTrainerConfig
+from components.model_trainer import ModelTrainer
+from components.lstm_data_transformation import LSTMConfig
+from components.lstm_data_transformation import LSTMDataProcessor
 from components.lstm_model_trainer import LSTMModelTrainerConfig
 from components.lstm_model_trainer import LSTMModelTrainer
 
@@ -97,5 +126,5 @@ if __name__ == "__main__":
     # model_trainer = ModelTrainer()
     # print(model_trainer.initiate_model_trainer(train_arr,test_arr))
 
-    lstm_trainer = LSTMModelTrainer()
-    print(lstm_trainer.initiate_training(train_data))
+    # lstm_trainer = LSTMModelTrainer()
+    # print(lstm_trainer.initiate_training(train_data))

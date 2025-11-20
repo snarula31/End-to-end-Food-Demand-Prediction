@@ -85,15 +85,6 @@
 #         try:
 #             logging.info("Loading Data...")
 #             df = pd.read_csv(train_path)
-            
-#             # Merge info files if they aren't already merged in train_path
-#             # Assuming 'train.csv' in your pipeline contains merged data. 
-#             # If not, merge here like in your data_ingestion.py
-#             if 'city_code' not in df.columns:
-#                 center_info = pd.read_csv('notebook/data/fulfilment_center_info.csv')
-#                 meal_info = pd.read_csv('notebook/data/meal_info.csv')
-#                 df = df.merge(center_info, on='center_id', how='left')
-#                 df = df.merge(meal_info, on='meal_id', how='left')
 
 #             # Feature Engineering (Cyclical time features needed)
 #             df['week_of_year'] = df['week'].apply(lambda x: x % 52 if x % 52 != 0 else 52)

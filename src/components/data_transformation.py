@@ -97,18 +97,6 @@ class DataTransformation:
 
             preprocessing_obj = self.get_data_transformer_object()
 
-
-            # numerical_columns = ['week', 'center_id', 'meal_id', 'checkout_price', 'base_price',
-            #                     'region_code', 'op_area', 'discount_amount',
-            #                     'discount_percentage', 'discount_y_n', 'weekly_base_price_change',
-            #                     'weekly_checkout_price_change', 'week_of_year', 'quarter', 'month',
-            #                     '4_week_avg_checkout_price', '4_week_avg_base_price', 'lag_1', 'lag_2',
-            #                     'lag_3', 'lag_4', 'rolling_4_week_mean','rolling_std','rolling_min',
-            #                     'rolling_max','rolling_median']
-            
-            # categorical_columns = ['emailer_for_promotion', 'homepage_featured', 'center_type', 'category',
-            #                        'cuisine', 'city_cat']
-
             input_feature_train_df = train_df.drop(columns=['id','num_orders'],axis=1)#x_train
             target_feature_train_df = np.log1p(train_df['num_orders'])#y_train
 
