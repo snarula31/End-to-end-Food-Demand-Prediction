@@ -29,35 +29,8 @@ class LSTMDataTransformation:
                                   ]
         
         self.categorical_columns = ['category','cuisine','center_type','region_code','city_code',
-                                    # 'center_id','meal_id'
+                                    'center_id','meal_id'
                                     ]
-
-    def get_LSTM_data_transformer_object(self):
-        try:
-            
-            numerical_transformer = Pipeline(steps=[
-                ('imputer', SimpleImputer(strategy='median')),
-                ('scaler', StandardScaler())
-            ])
-
-            # categorical_transformer = Pipeline(steps=[
-            #     ('imputer', SimpleImputer(strategy='most_frequent',fill_value='missing')),
-            #     ('label', LabelEncoder())
-            # ])
-            
-            LSTM_preprocessor = ColumnTransformer(
-                transformers=[
-                    ('numerical', numerical_transformer, self.numerical_columns),
-                    # ('categorical', categorical_transformer, self.categorical_columns),
-                ],
-                remainder='passthrough'
-                )
-
-            return LSTM_preprocessor
-        
-        except Exception as e:
-            logging.error(f"Error occurred in LSTM data handler object creation: {e}")
-            raise CustomException(e, sys) from e
 
     def create_sequences(self, df: pd.DataFrame, target_col,window_size: int):
         """
@@ -82,7 +55,8 @@ class LSTMDataTransformation:
             
             group_dyn = group[dyn_cols].values
             group_stat = group[stat_cols].values
-            group_target = group[target_col].values
+            group_target = np.log1p(group[target_col].values)
+            # group_target = group[target_col].values
             
             for i in range(window_size, len(group)):
                 X_dynamic.append(group_dyn[i-window_size:i])
@@ -118,61 +92,48 @@ class LSTMDataTransformation:
             logging.info(f"Test df shape: {test_df.shape}")
             logging.info(f"Test df columns: {test_df.columns}")
 
-            train_df = train_df.sort_values(['meal_id','center_id','week'])
-            test_df = test_df.sort_values(['meal_id','center_id','week'])
-
-            target_col_name = 'num_orders'
-            train_df[target_col_name] = np.log1p(train_df[target_col_name])
-            test_df[target_col_name] = np.log1p(test_df[target_col_name])
-
-            # logging.info("Fetching preprocessor object")            
-            # preprocessing_obj = self.get_LSTM_data_transformer_object()
-
-            # X_train_raw = train_df.drop(columns=['id','num_orders'],axis=1)
-            # y_train = train_df[target_col_name]
-            # X_test_raw = test_df.drop(columns=['id','num_orders'],axis=1)
-            # y_test = test_df[target_col_name]
-
-            # logging.info("Applying preprocessing object on training and test dataframes")
-
-            # X_train_transformed = preprocessing_obj.fit_transform(X_train_raw)
-            # X_test_transformed = preprocessing_obj.transform(X_test_raw)
-
-            # all_columns = self.numerical_columns + self.categorical_columns
-
-            # train_df_processed = pd.DataFrame(X_train_transformed, columns=all_columns)
-            # test_df_processed = pd.DataFrame(X_test_transformed, columns=all_columns)
-
-            # train_df_processed[target_col_name] = train_df[target_col_name].values
-            # test_df_processed[target_col_name] = test_df[target_col_name].values
-
-            # logging.info("Creating sequences for Training Data...")
-            # X_train_dyn, X_train_stat, y_train = self.create_sequences(train_df_processed, target_col_name)
+            train_df = train_df.sort_values(['meal_id','center_id','week']).reset_index(drop=True)
+            test_df = test_df.sort_values(['meal_id','center_id','week']).reset_index(drop=True)   
             
-            # logging.info("Creating sequences for Testing Data...")
-            # X_test_dyn, X_test_stat, y_test = self.create_sequences(test_df_processed, target_col_name)
-
-            # logging.info(f"Final Train Shapes - Dynamic: {X_train_dyn.shape}, Static: {X_train_stat.shape}, Y: {y_train.shape}")
-
-            # # 8. Structure output for Keras Multi-Input Model
-            # # We split the static array into a list of individual arrays (one per categorical feature)
-            # # This allows separate Embedding layers for each ID type
+            logging.info("Scaling numerical features for LSTM model")
             
-            # def split_static_inputs(X_stat):
-            #     # X_stat is (N, 7). We want a list of 7 arrays, each (N,)
-            #     return [X_stat[:, i] for i in range(X_stat.shape[1])]
+            scaler = StandardScaler()
+            train_df[self.numerical_columns] = scaler.fit_transform(train_df[self.numerical_columns])
+            test_df[self.numerical_columns] = scaler.transform(test_df[self.numerical_columns])
+            
+            logging.info("Scaled numerical features for LSTM model successfully")
 
-            # train_inputs = [X_train_dyn] + split_static_inputs(X_train_stat)
-            # test_inputs = [X_test_dyn] + split_static_inputs(X_test_stat)
+            logging.info("Encoding categorical columns for LSTM model")
 
-            # return (
-            #     train_inputs,
-            #     y_train,
-            #     test_inputs,
-            #     y_test,
-            #     self.lstm_data_transformation_config.lstm_preprocessor_obj_file_path
-            # )
+            encoder = LabelEncoder()
+            for col in self.categorical_columns:
 
+                all_values = pd.concat([train_df[col], test_df[col]], axis=0)
+                encoder.fit(all_values)
+
+                train_df[col] = encoder.transform(train_df[col])
+                test_df[col] = encoder.transform(test_df[col])
+
+            logging.info("Encoded categorical features for LSTM model successfully")
+
+            logging.info("Creating sequences for LSTM model")
+
+            X_train_dyn,X_train_stat,y_train = self.create_sequences(df=train_df,target_col='num_orders',window_size=10)
+
+            last_train_records = train_df.groupby(['center_id', 'meal_id']).tail(10)
+            
+        
+            test_df_with_history = pd.concat([last_train_records, test_df]).sort_values(['meal_id','center_id','week'])
+            
+            X_test_dyn, X_test_stat, y_test = self.create_sequences(test_df_with_history, target_col='num_orders',window_size=10)
+
+            def split_static(arr):
+                return [arr[:, i] for i in range(arr.shape[1])]
+
+            train_inputs = [X_train_dyn] + split_static(X_train_stat)
+            test_inputs = [X_test_dyn] + split_static(X_test_stat)
+
+            return train_inputs, y_train, test_inputs, y_test
 
 
         except Exception as e:
