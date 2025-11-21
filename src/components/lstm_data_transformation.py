@@ -133,6 +133,12 @@ class LSTMDataTransformation:
             train_inputs = [X_train_dyn] + split_static(X_train_stat)
             test_inputs = [X_test_dyn] + split_static(X_test_stat)
 
+            logging.info("Created sequences for LSTM model successfully")
+            logging.info(f'Train inputs shapes: {[inp.shape for inp in train_inputs]}')
+            logging.info(f'train inputs: {train_inputs}')
+            logging.info(f'Test inputs shapes: {[inp.shape for inp in test_inputs]}')
+            logging.info(f'test inputs: {test_inputs}')
+
             return train_inputs, y_train, test_inputs, y_test
 
 
