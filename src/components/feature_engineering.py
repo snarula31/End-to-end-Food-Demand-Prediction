@@ -34,32 +34,18 @@ class FeatureEngineering(BaseEstimator, TransformerMixin):
 
             df['week_of_year'] = df['week'].apply(lambda x: x % 52 if x % 52 != 0 else 52)
             
-            # df['quarter'] = df['week_of_year'].apply(lambda x: (x-1) // 13 + 1)
+            df['quarter'] = df['week_of_year'].apply(lambda x: (x-1) // 13 + 1)
             
-            # df['month'] = df['week_of_year'].apply(lambda x: (x-1) // 4 + 1)
+            df['month'] = df['week_of_year'].apply(lambda x: (x-1) // 4 + 1)
 
             #Creating lag feature
             df = df.sort_values(['meal_id','center_id','week'])
             for lag in [1,2,3,4,5,10,15]:
                 df[f'lag_{lag}'] = df.groupby(['meal_id','center_id'])['num_orders'].shift(lag).fillna(0)
-
-            # rolling_window = df.groupby(['meal_id','center_id'])['num_orders'].shift(1).rolling(window=4, min_periods=1)
-
-            # df['rolling_4_week_mean'] = round(rolling_window.mean().fillna(0),4)
-            # df['rolling_std'] = round(rolling_window.std().reset_index(drop=True))  # Volatility
-            # df['rolling_min'] = round(rolling_window.min().reset_index(drop=True),4)
-            # df['rolling_max'] = round(rolling_window.max().reset_index(drop=True),4)
-            # df['rolling_median'] = round(rolling_window.median().reset_index(drop=True),4)
             
-
             avg_price_cat = df.groupby(['week', 'category'])['base_price'].apply(lambda x: x.mean()).reindex(df .set_index(['week', 'category']).index).values
 
             df['price_vs_category_avg'] = round(df['base_price'] - avg_price_cat,4)
-
-            # Categorizing cities into four groups based on their order volume.
-            # city4={590:'C1', 526:'C2', 638:'C3'}
-            # df['city_cat']=df['city_code'].map(city4)
-            # df['city_cat']=df['city_cat'].fillna('C4')
 
             df['emailer_for_promotion'] = df['emailer_for_promotion'].astype('object')
             df['homepage_featured'] = df['homepage_featured'].astype('object')
@@ -80,36 +66,9 @@ class FeatureEngineering(BaseEstimator, TransformerMixin):
             df['expanding_checkout_price_max'] = checkout_price_expanding_window.max().reset_index(drop=True)
             df['expanding_checkout_price_min'] = checkout_price_expanding_window.min().reset_index(drop=True)
 
-
-            # df['center_cat_count'] = df.groupby(['category','center_id'])['num_orders'].transform('count')
-            
-            # df['center_cat_price_rank'] = df.groupby(['category','center_id','meal_id'])['base_price'].rank(method='dense').astype('int64')
-            # 
-            # df['center_cat_week_count'] = df.groupby(['category','center_id','week'])['num_orders'].transform('count')
-            
-            # df['center_cuisine_count'] = df.groupby(['cuisine','center_id'])['num_orders'].transform('count')
-            
             df['center_price_rank'] = df.groupby(['meal_id','center_id'])['base_price'].rank(method='dense').astype('int64')
-            
-            # df['center_week_price_rank'] = df.groupby(['center_id','week','meal_id'])['base_price']. rank(method='dense').astype('int64')
-            
-            # df['center_week_order_count'] = df.groupby(['center_id','week'])['num_orders']. transform('count')
-            
-            # df['city_meal_week_count'] = df.groupby(['city_code','week'])['meal_id'].transform('count')
-            
-            # df['meal_count'] = df.groupby('meal_id')['num_orders'].transform('count')
-            
-            # df['meal_city_price_rank'] = df.groupby(['meal_id','city_code'])['base_price'].rank(method='dense').astype('int64')
 
             df['meal_price_rank'] = df.groupby('meal_id')['base_price'].rank(method='dense').astype('int64')
-
-            # df['meal_region_price_rank'] = df.groupby(['meal_id','region_code'])['base_price'].rank(method='dense').astype('int64')
-
-            # df['meal_week_count'] = df.groupby(['meal_id','week'])['num_orders'].transform('count')
-
-            # df['meal_week_price_rank'] = df.groupby(['meal_id','week'])['base_price'].rank(method='dense').astype('int64')
-
-            # df['region_meal_count'] = df.groupby(['region_code','meal_id'])['num_orders'].transform('count')
 
             # Cyclical "Week of Year" Features (helps models understand seasonality)
             df['week_sin'] = np.sin(2 * np.pi * df['week_of_year'] / 52)
@@ -119,7 +78,7 @@ class FeatureEngineering(BaseEstimator, TransformerMixin):
             df = df.sort_values(['meal_id','center_id','week'])
             grouped = df.groupby(['meal_id','center_id'])
             
-            spans = [1,2,4,5,10,15]
+            spans = [1,2,3,4,5,10,15]
 
             for span in spans:
                 ewma_orders = grouped['num_orders'].shift(1).ewm(span=span, adjust=True,min_periods=1).mean()
@@ -151,7 +110,20 @@ class FeatureEngineering(BaseEstimator, TransformerMixin):
             df['week_of_year'] = df['week'].apply(lambda x: x % 52 if x % 52 != 0 else 52)
             df['week_sin'] = np.sin(2 * np.pi * df['week_of_year'] / 52)
             df['week_cos'] = np.cos(2 * np.pi * df['week_of_year'] / 52)
-        
+
+            df = df.sort_values(['meal_id','center_id','week'])
+            # for lag in [5,10,15]:
+            df['lag_10'] = df.groupby(['meal_id','center_id'])['num_orders'].shift(10).fillna(0)
+
+            df = df.sort_values(['meal_id','center_id','week'])
+            grouped = df.groupby(['meal_id','center_id'])
+            
+            spans = [10,15]
+
+            for span in spans:
+                ewma_orders = grouped['num_orders'].shift(1).ewm(span=span, adjust=True,min_periods=1).mean()
+                df[f'ewma_{span}_week_orders'] = round(ewma_orders.fillna(0),4)
+
             return df
         except Exception as e:
             logging.error(f"Error occurred during feature engineering for LSTM: {e}")

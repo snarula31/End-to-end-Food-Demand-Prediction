@@ -6,11 +6,7 @@ from scipy.stats import randint, uniform
 
 from dataclasses import dataclass
 from sklearn.linear_model import LinearRegression
-from sklearn.ensemble import (
-    RandomForestRegressor,
-    AdaBoostRegressor
-)
-from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import RandomForestRegressor
 from xgboost import XGBRegressor
 from catboost import CatBoostRegressor
 from lightgbm import LGBMRegressor
@@ -19,11 +15,11 @@ from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error, m
 
 from exception import CustomException
 from logger import logging
-from utils import save_object,evaluate_models
+from utils import save_object,evaluate_models,objective,tune_model_with_optuna
 
 @dataclass
 class ModelTrainerConfig:
-    trained_model_file_path = os.path.join('artifacts', 'model.pkl')
+    trained_model_file_path = os.path.join('artifacts', 'model1.pkl')
 
 class ModelTrainer:
     def __init__(self):
@@ -43,77 +39,64 @@ class ModelTrainer:
             logging.info("Training and testing split completed")
 
             models = {
-                "Linear Regression": LinearRegression(),
-                "Random Forest": RandomForestRegressor(random_state= 58),
-                "LGBM Regressor": LGBMRegressor(random_state=58),
-                "XGBRegressor": XGBRegressor(verbosity=3,random_state=58),
-                "CatBoosting Regressor": CatBoostRegressor(verbose=False,random_state=85)
+                # "Linear Regression": LinearRegression(),
+                # "Random Forest": RandomForestRegressor(random_state= 58),
+                "LGBM Regressor": LGBMRegressor(objective="poisson",random_state=58),
+                "XGBRegressor": XGBRegressor(objective="count:poisson",verbosity=3,random_state=58),
+                "CatBoosting Regressor": CatBoostRegressor(objective="poisson",verbose=False,random_state=85)
             }
 
 
-            params = {
-                "Random Forest": {
-                    'n_estimators': [100,150,200],  
-                    'max_features': ['sqrt'],
-                    'max_depth': [7,8,9],
-                    'min_samples_leaf': [2,3,4],     
-                },
-                "LGBM Regressor": {
-                    'boosting_type': ['gbdt'],
-                    'learning_rate': [0.01,0.1,0.13,0.16],
-                    'n_estimators': [100,150,200],
-                    'max_depth': [7,8,9],
-                    'device_type': ['gpu']  
-                },
-                "Linear Regression": {},
-                "XGBRegressor": {
-                    'booster': ['gbtree'], 
-                    'tree_method': ['hist'],
-                    'max_depth': [7,8,9],
-                    'learning_rate': [0.01,0.1,0.14],
-                    'n_estimators': [50,100,150,200,],
-                    'device': ['cuda']
-                },
-                "CatBoosting Regressor": {
-                    'max_depth': [7,8,9],
-                    'learning_rate': [0.01,0.1,0.12],
-                    'iterations': [100,150,200,250],
-                    'l2_leaf_reg': [4,6,8],
-                    'loss_function': ['RMSE'],
-                }
-            }
-
-            # logging.info("STARTNG SANITY CHECK RUN")
-
-            # import time
-
-            # model = XGBRegressor(tree_method='gpu_hist', device='cuda',n_estimators=120, verbosity=3)
-
-            # start_time = time.time()
-            # model.fit(X_train, y_train)
-            # end_time = time.time()
-
-            # logging.info(f"Model training completed in {end_time - start_time:.3f} seconds")
-
-            # sys.exit("exiting after sanity check")
-
+            # params = {
+            #     "Random Forest": {
+            #         'n_estimators': [100,150,200],  
+            #         'max_features': ['sqrt'],
+            #         'max_depth': [7,8,9],
+            #         'min_samples_leaf': [2,3,4],     
+            #     },
+            #     "LGBM Regressor": {
+            #         'boosting_type': ['gbdt'],
+            #         'learning_rate': [0.01,0.1,0.13,0.16],
+            #         'n_estimators': [100,150,200],
+            #         'max_depth': [7,8,9],
+            #         'device_type': ['gpu']  
+            #     },
+            #     "Linear Regression": {},
+            #     "XGBRegressor": {
+            #         'booster': ['gbtree'], 
+            #         'tree_method': ['hist'],
+            #         'max_depth': [7,8,9],
+            #         'learning_rate': [0.01,0.1,0.14],
+            #         'n_estimators': [50,100,150,200],
+            #         'device': ['cuda']
+            #     },
+            #     "CatBoosting Regressor": {
+            #         'max_depth': [7,8,9],
+            #         'learning_rate': [0.01,0.1,0.12],
+            #         'iterations': [100,150,200,250],
+            #         'l2_leaf_reg': [4,6,8],
+            #         'loss_function': ['RMSE'],
+            #     }
+            # }
             
             logging.info("Model training initiated")
             logging.info("Evaluating models")
 
             # model_report,best_trained_models = evaluate_models(X_train=X_train, y_train=y_train, X_test=X_test, y_test=y_test, models=models,param=params) --randomizedsearchcv
-            model_report = evaluate_models(X_train=X_train, y_train=y_train, X_test=X_test, y_test=y_test, models=models,param=params)
+            # model_report = evaluate_models(X_train=X_train, y_train=y_train, X_test=X_test, y_test=y_test, models=models,param=params)
+
+            model_report,best_trained_models = tune_model_with_optuna(X_train, y_train, models=models, n_trials=20)
 
             best_model_score = max(model_report.values())
 
             best_model_name = list(model_report.keys())[list(model_report.values()).index(best_model_score)]
 
             # best_model = best_trained_models[best_model_name]with --randomised searchcv
-            best_model = models[best_model_name]
+            best_model = best_trained_models[best_model_name]
 
             # if best_model_score < 0.6:
             #     raise CustomException("No best model found")
-            logging.info(f"Best model found: {best_model_name} with r2 score: {best_model_score}")
+            # logging.info(f"Best model found: {best_model_name} with r2 score: {best_model_score}")
 
             save_object(
                 file_path=self.model_trainer_config.trained_model_file_path,
@@ -167,3 +150,5 @@ class ModelTrainer:
 
 # reduce training time further
 # reduce hyperparameter combinations
+
+# try using arima and fb prophet models

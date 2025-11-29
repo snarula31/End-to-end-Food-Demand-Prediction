@@ -2,7 +2,7 @@ import os
 import sys
 import pandas as pd
 import numpy as np
-from sklearn.preprocessing import StandardScaler,LabelEncoder
+from sklearn.preprocessing import StandardScaler,LabelEncoder,QuantileTransformer
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
@@ -17,16 +17,19 @@ from utils import save_object
 
 @dataclass
 class LSTMDataTransformationConfig:
-    lstm_preprocessor_obj_file_path: str = os.path.join('artifacts', 'lstm_preprocessor.pkl')
+    lstm_scaler_file_path: str = os.path.join('artifacts', 'lstm_scaler1.pkl')
+    lstm_encoder_file_path: str = os.path.join('artifacts', 'lstm_encoder1.pkl')
 
 
 class LSTMDataTransformation:
     def __init__(self):
         self.lstm_data_transformation_config = LSTMDataTransformationConfig()
-        self.numerical_columns = ['week','base_price','checkout_price','discount_amount','discount_percentage',
-                                  'week_of_year','week_sin','week_cos','price_vs_category_avg',
-                                #   'center_price_rank','meal_price_rank'
-                                  ]
+        self.numerical_columns = ['week','checkout_price', 'base_price', 'op_area', 'discount_amount',
+                                'discount_percentage','week_of_year','lag_10','price_vs_category_avg',
+                                'week_sin', 'week_cos', 'ewma_10_week_orders','ewma_15_week_orders',
+                                'emailer_for_promotion','homepage_featured'
+                                # ,'center_price_rank','meal_price_rank'
+                                ]
         
         self.categorical_columns = ['category','cuisine','center_type','region_code','city_code',
                                     'center_id','meal_id'
@@ -37,7 +40,7 @@ class LSTMDataTransformation:
         Efficiently converts DataFrame into 3D sequences (Samples, TimeSteps, Features)
         """
         # window_size = self.lstm_data_transformation_config.window_size
-        
+        qt = QuantileTransformer(output_distribution='normal')
         X_dynamic = [] 
         X_static = []  
         y = []         
@@ -47,7 +50,7 @@ class LSTMDataTransformation:
         
         grouped = df.groupby(['center_id', 'meal_id'])
         
-        logging.info("Generating sequences (Sliding Window)...")
+        # logging.info("Generating sequences (Sliding Window)...")
         
         for _, group in grouped:
             if len(group) <= window_size:
@@ -67,6 +70,9 @@ class LSTMDataTransformation:
                 
         return np.array(X_dynamic), np.array(X_static), np.array(y)
     
+    def split_static(self,arr):
+        return [arr[:, i] for i in range(arr.shape[1])]
+    
     def initiate_LSTM_data_transformation(self,train_path,test_path):
         try:
             logging.info('Initiating LSTM data Transformation')
@@ -77,13 +83,21 @@ class LSTMDataTransformation:
 
             logging.info('Successfully read training and test datasets')
 
+            merged = pd.concat([train_df, test_df], axis=0, ignore_index=True)
+            test_df_with_history = merged[merged['week'].isin(range(122,146))].copy()
+
             logging.info('Initiating feature engineering for LSTM model')
 
             feature_engineering = FeatureEngineering()
             train_df = feature_engineering.derive_features_lstm(train_df)
-            test_df = feature_engineering.derive_features_lstm(test_df)
+            test_df_with_history = feature_engineering.derive_features_lstm(test_df)
 
             logging.info('Feature engineering for LSTM model completed')
+
+            test_df = test_df_with_history[test_df_with_history['week'].isin(range(136,146))]
+
+            train_df = train_df.drop(columns=['id'],axis=1)
+            test_df = test_df.drop(columns=['id'],axis=1)
 
             logging.info(f"Train df: {train_df.head()}")
             logging.info(f"Train df: {train_df.shape}")
@@ -95,26 +109,32 @@ class LSTMDataTransformation:
             train_df = train_df.sort_values(['meal_id','center_id','week']).reset_index(drop=True)
             test_df = test_df.sort_values(['meal_id','center_id','week']).reset_index(drop=True)   
             
-            logging.info("Scaling numerical features for LSTM model")
+            logging.info("Initiating scaling of numerical features for LSTM model")
             
             scaler = StandardScaler()
             train_df[self.numerical_columns] = scaler.fit_transform(train_df[self.numerical_columns])
             test_df[self.numerical_columns] = scaler.transform(test_df[self.numerical_columns])
             
-            logging.info("Scaled numerical features for LSTM model successfully")
+            logging.info("Scaling of numerical features for LSTM model successfully completed")
 
-            logging.info("Encoding categorical columns for LSTM model")
+            logging.info("Initiating Encoding of categorical columns for LSTM model")
 
             encoder = LabelEncoder()
             for col in self.categorical_columns:
-
+                # Merging train and test data to ensure consistent encoding
                 all_values = pd.concat([train_df[col], test_df[col]], axis=0)
                 encoder.fit(all_values)
 
                 train_df[col] = encoder.transform(train_df[col])
                 test_df[col] = encoder.transform(test_df[col])
 
-            logging.info("Encoded categorical features for LSTM model successfully")
+            logging.info("Encoding of categorical features for LSTM model successfully completed")
+
+            save_object(file_path=self.lstm_data_transformation_config.lstm_scaler_file_path,
+                        obj=scaler)
+            
+            save_object(file_path=self.lstm_data_transformation_config.lstm_encoder_file_path,
+                        obj=encoder)
 
             logging.info("Creating sequences for LSTM model")
 
@@ -127,17 +147,15 @@ class LSTMDataTransformation:
             
             X_test_dyn, X_test_stat, y_test = self.create_sequences(test_df_with_history, target_col='num_orders',window_size=10)
 
-            def split_static(arr):
-                return [arr[:, i] for i in range(arr.shape[1])]
+            train_inputs = [X_train_dyn] + self.split_static(X_train_stat)
+            test_inputs = [X_test_dyn] + self.split_static(X_test_stat)
 
-            train_inputs = [X_train_dyn] + split_static(X_train_stat)
-            test_inputs = [X_test_dyn] + split_static(X_test_stat)
-
-            logging.info("Created sequences for LSTM model successfully")
+            logging.info("Successfully created sequences for LSTM model")
             logging.info(f'Train inputs shapes: {[inp.shape for inp in train_inputs]}')
-            logging.info(f'train inputs: {train_inputs}')
+            logging.info(f'Y_train shape: {y_train.shape}')
             logging.info(f'Test inputs shapes: {[inp.shape for inp in test_inputs]}')
-            logging.info(f'test inputs: {test_inputs}')
+            logging.info(f'Y_test shape: {y_test.shape}')
+
 
             return train_inputs, y_train, test_inputs, y_test
 

@@ -3,11 +3,20 @@ import sys
 
 import numpy as np 
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 import dill
 import pickle
 from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error,mean_absolute_percentage_error
 from sklearn.model_selection import GridSearchCV,RandomizedSearchCV
-from sklearn.model_selection import TimeSeriesSplit
+from sklearn.model_selection import TimeSeriesSplit,cross_val_score
+
+import optuna
+from sklearn.linear_model import LinearRegression
+from sklearn.ensemble import RandomForestRegressor
+from xgboost import XGBRegressor
+from catboost import CatBoostRegressor
+from lightgbm import LGBMRegressor
 
 from logger import logging
 from exception import CustomException
@@ -102,6 +111,167 @@ def evaluate_models(X_train, y_train,X_test,y_test,models,param):
     except Exception as e:
         logging.info(f"Error occurred in evaluate_models function: {e}")
         raise CustomException(e, sys)
+    
+
+
+# Functionns for hyperparameter tunning using optuna/
+
+def objective(trial,X,y,model_name,cv):
+    try:
+        if model_name == 'XGBRegressor':
+            params = {
+                'booster': 'gbtree',
+                'tree_method': 'hist',
+                'device': 'cuda',
+                'n_estimators': trial.suggest_int('n_estimators', 50, 500),
+                'max_depth': trial.suggest_int('max_depth', 6, 16),
+                'learning_rate': trial.suggest_float('learning_rate', 0.01, 0.2),
+                'alpha': trial.suggest_float('alpha', 0.0, 5.0),
+                'lambda': trial.suggest_float('lambda', 0.0, 5.0),
+                'verbosity': 3
+            }
+            model = XGBRegressor(**params)
+
+        elif model_name == 'LGBM Regressor':
+            params = {
+            'boosting_type': 'gbdt',
+            'n_estimators': trial.suggest_int('n_estimators', 50, 500),
+            'learning_rate': trial.suggest_float('learning_rate', 0.01, 0.2),
+            'max_depth': trial.suggest_int('max_depth', 6, 16),
+            'device_type': 'gpu',
+            'reg_alpha': trial.suggest_float('reg_alpha', 0.0, 5.0),
+            'reg_lambda': trial.suggest_float('reg_lambda', 0.0, 5.0),
+            }
+            model = LGBMRegressor(**params)
+
+        elif model_name == 'CatBoosting Regressor':
+            params = {
+                'depth': trial.suggest_int('depth', 6, 16),
+                'learning_rate': trial.suggest_float('learning_rate', 0.01,0.2),
+                'iterations': trial.suggest_int('iterations', 50, 500),
+                'l2_leaf_reg': trial.suggest_int('l2_leaf_reg', 1, 10),
+            }
+            model = CatBoostRegressor(**params)
+
+        # elif model_name == 'Random Forest':
+        #     params = {
+        #         'n_estimators': trial.suggest_int('n_estimators', 50, 500),
+        #         'max_depth': trial.suggest_int('max_depth', 6, 16),
+        #         'max_features': trial.suggest_categorical('max_features', ['sqrt']),
+        #     }
+
+            # model = RandomForestRegressor(**params)
+        # else:
+        #     param = {}
+        #     model = LinearRegression()
+
+        r2_scores = cross_val_score(model, X, y, cv=cv, scoring='r2', n_jobs=-1)
+        logging.info(f"Trial completed with R2 scores: {r2_scores}")    
+        r2_score_mean = r2_scores.mean()
+
+        return r2_score_mean
+
+    except Exception as e:
+        logging.info(f"Error occurred in objective function: {e}")
+        raise CustomException(e, sys)
+    
+
+def tune_model_with_optuna(X_train, y_train, models, n_trials=20):
+    report = {}
+    best_models = {}
+    
+    tscv = TimeSeriesSplit(n_splits=3)
+
+    for model_name in models.keys():
+        logging.info(f"--- Starting Optuna Optimization for {model_name} ---")
+        
+        study = optuna.create_study(direction="maximize", sampler=optuna.samplers.TPESampler(seed=42))
+        
+        func = lambda trial: objective(trial, X_train, y_train, model_name, tscv)
+        study.optimize(func, n_trials=n_trials)
+
+        logging.info(f"Best params for {model_name}: {study.best_params}")
+        logging.info(f"Best R2 score for {model_name}: {study.best_value}")
+        
+        logging.info(f"Refitting {model_name} with best params...")
+        
+        best_params = study.best_params
+        
+        if model_name == "LGBM Regressor":
+            model = LGBMRegressor(**best_params)
+        elif model_name == "XGBRegressor":
+            model = XGBRegressor(**best_params)
+        elif model_name == "CatBoosting Regressor":
+            # best_params['task_type'] = 'GPU'
+            model = CatBoostRegressor(**best_params)
+        # else:
+        #     model = RandomForestRegressor(**best_params)
+
+        model.fit(X_train, y_train)
+        
+        report[model_name] = study.best_value
+        best_models[model_name] = model
+        
+    return report, best_models
+    
+
+def evaluate_lstm_model(self, model, X_test, y_test_log, history=None):
+    try:
+        logging.info("Starting Model Evaluation...")
+
+        # --- 1. Make Predictions ---
+        # The model returns a 2D array (N, 1). We flatten it to 1D (N,).
+        logging.info("Generating predictions...")
+        predictions_log = model.predict(X_test, batch_size=512).flatten()
+
+        # --- 2. Inverse Transform (Log -> Original) ---
+        # We use expm1 because we used log1p during training
+        predictions_actual = np.expm1(predictions_log)
+        y_test_actual = np.expm1(y_test_log)
+
+        # Sanity check: Ensure no negative predictions (impossible for orders)
+        predictions_actual = np.maximum(predictions_actual, 0)
+
+        # --- 3. Calculate Metrics ---
+        r2 = r2_score(y_test_actual, predictions_actual)
+        mae = mean_absolute_error(y_test_actual, predictions_actual)
+        rmse = np.sqrt(mean_squared_error(y_test_actual, predictions_actual))
+        mape = mean_absolute_percentage_error(y_test_actual, predictions_actual)
+
+        logging.info(f"--- Evaluation Results ---")
+        logging.info(f"R2 Score: {r2:.4f}")
+        logging.info(f"MAE: {mae:.4f}")
+        logging.info(f"RMSE: {rmse:.4f}")
+        logging.info(f"MAPE: {mape:.4f}")
+
+        # --- 4. Plot Training History (Loss Curves) ---
+        if history:
+            plt.figure(figsize=(12, 6))
+            plt.plot(history.history['loss'], label='Train Loss')
+            plt.plot(history.history['val_loss'], label='Validation Loss')
+            plt.title('LSTM Training vs Validation Loss')
+            plt.xlabel('Epochs')
+            plt.ylabel('Loss (MSE)')
+            plt.legend()
+            plt.savefig(os.path.join('artifacts', 'lstm_loss_curve.png'))
+            logging.info("Loss curve saved to artifacts/lstm_loss_curve.png")
+            plt.close()
+
+        # --- 5. Plot Actual vs Predicted (Snapshot) ---
+        # Plotting all 30k points is messy. Let's plot the first 100 points to see the fit.
+        plt.figure(figsize=(15, 6))
+        plt.plot(y_test_actual[:150], label='Actual Orders', color='blue')
+        plt.plot(predictions_actual[:150], label='Predicted Orders', color='orange', linestyle='--')
+        plt.title('Actual vs Predicted Orders (First 150 Samples)')
+        plt.legend()
+        plt.savefig(os.path.join('artifacts', 'lstm_prediction_sample.png'))
+        logging.info("Prediction sample plot saved to artifacts/lstm_prediction_sample.png")
+        plt.close()
+
+        return r2, mae, rmse, mape
+
+    except Exception as e:
+        raise CustomException(e, sys) from e
     
 def load_object(file_path):
     try:

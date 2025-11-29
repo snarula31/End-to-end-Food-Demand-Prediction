@@ -13,8 +13,8 @@ from components.model_trainer import ModelTrainerConfig
 from components.model_trainer import ModelTrainer
 from components.lstm_data_transformation import LSTMDataTransformationConfig
 from components.lstm_data_transformation import LSTMDataTransformation
-# from components.lstm_model_trainer import LSTMModelTrainerConfig
-# from components.lstm_model_trainer import LSTMModelTrainer
+from components.lstm_model_trainer import LSTMModelTrainerConfig
+from components.lstm_model_trainer import LSTMModelTrainer
 
 @dataclass
 class DataIngestionConfig:
@@ -94,11 +94,11 @@ if __name__ == "__main__":
     data_transformation = DataTransformation()
     train_arr,test_arr,_ = data_transformation.initiate_data_transformation(train_data,test_data)
 
-    # model_trainer = ModelTrainer()
-    # print(model_trainer.initiate_model_trainer(train_arr,test_arr))
+    model_trainer = ModelTrainer()
+    print(model_trainer.initiate_model_trainer(train_arr,test_arr))
 
-    lstm_data_transformation = LSTMDataTransformation()
-    X_train, y_train, X_test, y_test = lstm_data_transformation.initiate_LSTM_data_transformation(train_data,test_data)
+    # lstm_data_transformation = LSTMDataTransformation()
+    # X_train, y_train, X_test, y_test = lstm_data_transformation.initiate_LSTM_data_transformation(train_data,test_data)
 
     # lstm_trainer = LSTMModelTrainer()
-    # print(lstm_trainer.initiate_training(train_data))
+    # print(lstm_trainer.initiate_lstm_model_training(X_train, y_train, X_test, y_test))

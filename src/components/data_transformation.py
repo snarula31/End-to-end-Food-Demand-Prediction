@@ -19,7 +19,7 @@ from components.feature_engineering import FeatureEngineering
 
 @dataclass
 class DataTransformationConfig:
-    preprocessor_obj_file_path: str = os.path.join('artifacts', 'preprocessor.pkl')
+    preprocessor_obj_file_path: str = os.path.join('artifacts', 'preprocessor1.pkl')
     
 
 class DataTransformation:
@@ -31,11 +31,10 @@ class DataTransformation:
         try:
             numerical_columns = ['week','checkout_price', 'base_price', 'op_area', 'discount_amount',
                                 'discount_percentage','weekly_base_price_change','weekly_checkout_price_change','week_of_year',
-                                'lag_1', 'lag_2','lag_3', 'lag_4','lag_5','lag_10','lag_15', 
-                                'price_vs_category_avg','expanding_base_price_mean', 'expanding_base_price_max',
+                                'lag_10','price_vs_category_avg','expanding_base_price_mean', 'expanding_base_price_max',
                                 'expanding_base_price_min', 'expanding_checkout_price_mean','expanding_checkout_price_max',
-                                'expanding_checkout_price_min','center_price_rank','meal_price_rank','week_sin', 'week_cos','ewma_1_week_orders',
-                                'ewma_2_week_orders','ewma_4_week_orders', 'ewma_5_week_orders', 'ewma_10_week_orders','ewma_15_week_orders']
+                                'expanding_checkout_price_min','center_price_rank','meal_price_rank','week_sin', 'week_cos',
+                                'ewma_10_week_orders','ewma_15_week_orders']
             
             ohe_categorical_columns = ['emailer_for_promotion', 'homepage_featured','center_type', 'category','cuisine']
             
@@ -98,10 +97,13 @@ class DataTransformation:
             preprocessing_obj = self.get_data_transformer_object()
 
             input_feature_train_df = train_df.drop(columns=['id','num_orders'],axis=1)#x_train
-            target_feature_train_df = np.log1p(train_df['num_orders'])#y_train
+            # target_feature_train_df = np.log1p(train_df['num_orders'])#y_train
+            target_feature_train_df = train_df['num_orders']#y_train
+
 
             input_feature_test_df = test_df.drop(columns=['id','num_orders'],axis=1)#x_test
-            target_feature_test_df = np.log1p(test_df['num_orders'])#y_test
+            # target_feature_test_df = np.log1p(test_df['num_orders'])#y_test
+            target_feature_test_df = test_df['num_orders']#y_test
 
             logging.info(f"Input feature train df: {input_feature_train_df.head()}")
             logging.info(f"Target feature train df: {target_feature_train_df.head()}")
