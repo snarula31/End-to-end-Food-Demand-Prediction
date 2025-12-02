@@ -24,9 +24,9 @@ class FeatureEngineering(BaseEstimator, TransformerMixin):
             
             # df['discount_y_n'] = [1 if x > 0 else 0 for x in (df['base_price'] - df['checkout_price'])]
             
-            df['weekly_base_price_change'] = round(df.groupby(['meal_id','center_id'])['base_price'].diff().fillna(0),4)
+            # df['weekly_base_price_change'] = round(df.groupby(['meal_id','center_id'])['base_price'].diff().fillna(0),4)
             
-            df['weekly_checkout_price_change'] = round(df.groupby(['meal_id','center_id'])['checkout_price'].diff().fillna(0),4)
+            # df['weekly_checkout_price_change'] = round(df.groupby(['meal_id','center_id'])['checkout_price'].diff().fillna(0),4)
             
             # df['4_week_avg_checkout_price'] = round(df.groupby(['meal_id', 'center_id'])['checkout_price'].transform(lambda x: x.rolling(window=4, min_periods=1).mean()),4)
 
@@ -60,11 +60,6 @@ class FeatureEngineering(BaseEstimator, TransformerMixin):
             df['expanding_base_price_mean'] = round(base_price_expanding_window.mean().reset_index(level=[0,1],drop=True),4)
             df['expanding_base_price_max'] = base_price_expanding_window.max().reset_index(drop=True)
             df['expanding_base_price_min'] = base_price_expanding_window.min().reset_index(drop=True)
-            
-            checkout_price_expanding_window = df.groupby(['meal_id','center_id'])['checkout_price'].expanding(min_periods=1)
-            df['expanding_checkout_price_mean'] = round(checkout_price_expanding_window.mean().reset_index(level=[0,1],drop=True),4)
-            df['expanding_checkout_price_max'] = checkout_price_expanding_window.max().reset_index(drop=True)
-            df['expanding_checkout_price_min'] = checkout_price_expanding_window.min().reset_index(drop=True)
 
             df['center_price_rank'] = df.groupby(['meal_id','center_id'])['base_price'].rank(method='dense').astype('int64')
 
@@ -112,13 +107,13 @@ class FeatureEngineering(BaseEstimator, TransformerMixin):
             df['week_cos'] = np.cos(2 * np.pi * df['week_of_year'] / 52)
 
             df = df.sort_values(['meal_id','center_id','week'])
-            # for lag in [5,10,15]:
-            df['lag_10'] = df.groupby(['meal_id','center_id'])['num_orders'].shift(10).fillna(0)
+            for lag in [1,2,3,4,5,10,15]:
+                df[f'lag_{lag}'] = df.groupby(['meal_id','center_id'])['num_orders'].shift(lag).fillna(0)
 
             df = df.sort_values(['meal_id','center_id','week'])
             grouped = df.groupby(['meal_id','center_id'])
             
-            spans = [10,15]
+            spans = [1,2,3,4,5,10,15]
 
             for span in spans:
                 ewma_orders = grouped['num_orders'].shift(1).ewm(span=span, adjust=True,min_periods=1).mean()

@@ -9,7 +9,7 @@ import dill
 import pickle
 from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error,mean_absolute_percentage_error
 from sklearn.model_selection import GridSearchCV,RandomizedSearchCV
-from sklearn.model_selection import TimeSeriesSplit,cross_val_score
+from sklearn.model_selection import TimeSeriesSplit,cross_val_score,cross_validate
 
 import optuna
 from sklearn.linear_model import LinearRegression
@@ -126,8 +126,8 @@ def objective(trial,X,y,model_name,cv):
                 'n_estimators': trial.suggest_int('n_estimators', 50, 500),
                 'max_depth': trial.suggest_int('max_depth', 6, 16),
                 'learning_rate': trial.suggest_float('learning_rate', 0.01, 0.2),
-                'alpha': trial.suggest_float('alpha', 0.0, 5.0),
-                'lambda': trial.suggest_float('lambda', 0.0, 5.0),
+                'objective': 'reg:tweedie',
+                'eval_metric': 'mape',
                 'verbosity': 3
             }
             model = XGBRegressor(**params)
@@ -139,8 +139,9 @@ def objective(trial,X,y,model_name,cv):
             'learning_rate': trial.suggest_float('learning_rate', 0.01, 0.2),
             'max_depth': trial.suggest_int('max_depth', 6, 16),
             'device_type': 'gpu',
-            'reg_alpha': trial.suggest_float('reg_alpha', 0.0, 5.0),
-            'reg_lambda': trial.suggest_float('reg_lambda', 0.0, 5.0),
+            'objective': 'tweedie',
+            'tweedie_variance_power': trial.suggest_float('tweedie_variance_power', 1.0, 1.9),
+            'metric': 'mape',
             }
             model = LGBMRegressor(**params)
 
@@ -149,7 +150,9 @@ def objective(trial,X,y,model_name,cv):
                 'depth': trial.suggest_int('depth', 6, 16),
                 'learning_rate': trial.suggest_float('learning_rate', 0.01,0.2),
                 'iterations': trial.suggest_int('iterations', 50, 500),
-                'l2_leaf_reg': trial.suggest_int('l2_leaf_reg', 1, 10),
+                'loss_function': 'Tweedie:variance_power=1.5',
+                'eval_metric': 'MAPE',
+                # 'l2_leaf_reg': trial.suggest_int('l2_leaf_reg', 1, 10),
             }
             model = CatBoostRegressor(**params)
 
@@ -166,7 +169,7 @@ def objective(trial,X,y,model_name,cv):
         #     model = LinearRegression()
 
         r2_scores = cross_val_score(model, X, y, cv=cv, scoring='r2', n_jobs=-1)
-        logging.info(f"Trial completed with R2 scores: {r2_scores}")    
+        # logging.info(f"Trial completed with R2 scores: {r2_scores}")    
         r2_score_mean = r2_scores.mean()
 
         return r2_score_mean
@@ -190,6 +193,25 @@ def tune_model_with_optuna(X_train, y_train, models, n_trials=20):
         func = lambda trial: objective(trial, X_train, y_train, model_name, tscv)
         study.optimize(func, n_trials=n_trials)
 
+        # best_trials = study.best_trials
+        # chosen_trial = None
+        # best_r2_so_far = -float('inf')
+
+        # for trial in best_trials:
+        #     r2 = trial.values[0]
+        #     mape = trial.values[1]
+
+        #     if mape < 1.0:
+        #         if r2 > best_r2_so_far:
+        #             best_r2_so_far = r2
+        #             chosen_trial = trial
+        
+        # if chosen_trial is None:
+        #     chosen_trial = sorted(best_trials, key=lambda t: t.values[1])[0]
+
+        # logging.info(f"selected trial params: {chosen_trial.params}, values: {chosen_trial.values}")
+    
+
         logging.info(f"Best params for {model_name}: {study.best_params}")
         logging.info(f"Best R2 score for {model_name}: {study.best_value}")
         
@@ -202,7 +224,6 @@ def tune_model_with_optuna(X_train, y_train, models, n_trials=20):
         elif model_name == "XGBRegressor":
             model = XGBRegressor(**best_params)
         elif model_name == "CatBoosting Regressor":
-            # best_params['task_type'] = 'GPU'
             model = CatBoostRegressor(**best_params)
         # else:
         #     model = RandomForestRegressor(**best_params)

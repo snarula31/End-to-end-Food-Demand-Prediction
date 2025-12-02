@@ -41,9 +41,9 @@ class ModelTrainer:
             models = {
                 # "Linear Regression": LinearRegression(),
                 # "Random Forest": RandomForestRegressor(random_state= 58),
-                "LGBM Regressor": LGBMRegressor(objective="poisson",random_state=58),
-                "XGBRegressor": XGBRegressor(objective="count:poisson",verbosity=3,random_state=58),
-                "CatBoosting Regressor": CatBoostRegressor(objective="poisson",verbose=False,random_state=85)
+                "LGBM Regressor": LGBMRegressor(random_state=58),
+                "XGBRegressor": XGBRegressor(verbosity=3,random_state=58),
+                "CatBoosting Regressor": CatBoostRegressor(verbose=False,random_state=85)
             }
 
 
@@ -87,6 +87,8 @@ class ModelTrainer:
 
             model_report,best_trained_models = tune_model_with_optuna(X_train, y_train, models=models, n_trials=20)
 
+            logging.info(f'model report: {model_report}')
+
             best_model_score = max(model_report.values())
 
             best_model_name = list(model_report.keys())[list(model_report.values()).index(best_model_score)]
@@ -98,10 +100,12 @@ class ModelTrainer:
             #     raise CustomException("No best model found")
             # logging.info(f"Best model found: {best_model_name} with r2 score: {best_model_score}")
 
-            save_object(
-                file_path=self.model_trainer_config.trained_model_file_path,
-                obj=best_model
-            )
+            for model_name, model in best_trained_models.items():
+            
+                save_object(
+                file_path=os.path.join(f'artifacts',f'{model_name}_model.pkl'),
+                    obj=model
+                )
 
             logging.info("Model training completed")
             logging.info('predictions on test data')
@@ -113,6 +117,7 @@ class ModelTrainer:
             mae = mean_absolute_error(y_test_normal, actual_predictions)
             rmse = np.sqrt(mean_squared_error(y_test_normal, actual_predictions))
             mape = mean_absolute_percentage_error(y_test_normal, actual_predictions)
+
 
             logging.info(f'R2 Score of test data: {r2_square}')
             logging.info(f'Mean Absolute Error of test data: {mae}')

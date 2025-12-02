@@ -25,13 +25,16 @@ class LSTMDataTransformation:
     def __init__(self):
         self.lstm_data_transformation_config = LSTMDataTransformationConfig()
         self.numerical_columns = ['week','checkout_price', 'base_price', 'op_area', 'discount_amount',
-                                'discount_percentage','week_of_year','lag_10','price_vs_category_avg',
-                                'week_sin', 'week_cos', 'ewma_10_week_orders','ewma_15_week_orders',
-                                'emailer_for_promotion','homepage_featured'
-                                # ,'center_price_rank','meal_price_rank'
+                                'discount_percentage','week_of_year','lag_1', 'lag_2', 'lag_3', 'lag_4',
+                                'lag_5', 'lag_10','lag_15','price_vs_category_avg','week_sin', 'week_cos', 
+                                'ewma_1_week_orders', 'ewma_2_week_orders','ewma_3_week_orders','ewma_4_week_orders', 
+                                'ewma_5_week_orders','ewma_10_week_orders','ewma_15_week_orders',
+                                # 'emailer_for_promotion','homepage_featured'
+                                # 'center_price_rank','meal_price_rank'
                                 ]
         
-        self.categorical_columns = ['category','cuisine','center_type','region_code','city_code',
+        self.categorical_columns = [
+                                    'category','cuisine','center_type','region_code','city_code',
                                     'center_id','meal_id'
                                     ]
 

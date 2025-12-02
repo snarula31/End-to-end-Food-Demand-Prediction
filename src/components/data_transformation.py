@@ -30,11 +30,11 @@ class DataTransformation:
     def get_data_transformer_object(self):
         try:
             numerical_columns = ['week','checkout_price', 'base_price', 'op_area', 'discount_amount',
-                                'discount_percentage','weekly_base_price_change','weekly_checkout_price_change','week_of_year',
-                                'lag_10','price_vs_category_avg','expanding_base_price_mean', 'expanding_base_price_max',
-                                'expanding_base_price_min', 'expanding_checkout_price_mean','expanding_checkout_price_max',
-                                'expanding_checkout_price_min','center_price_rank','meal_price_rank','week_sin', 'week_cos',
-                                'ewma_10_week_orders','ewma_15_week_orders']
+                                'discount_percentage','week_of_year','lag_1', 'lag_2', 'lag_3', 'lag_4', 'lag_5', 'lag_10', 
+                                'lag_15','price_vs_category_avg','expanding_base_price_mean', 'expanding_base_price_max',
+                                'expanding_base_price_min','center_price_rank','meal_price_rank','week_sin', 'week_cos',
+                                'ewma_1_week_orders', 'ewma_2_week_orders','ewma_3_week_orders','ewma_4_week_orders', 
+                                'ewma_5_week_orders','ewma_10_week_orders','ewma_15_week_orders']
             
             ohe_categorical_columns = ['emailer_for_promotion', 'homepage_featured','center_type', 'category','cuisine']
             
@@ -77,11 +77,17 @@ class DataTransformation:
 
             logging.info("Successfully read training and test datasets")
 
+            merged = pd.concat([train_df, test_df], axis=0, ignore_index=True)
+            test_df_with_history = merged[merged['week'].isin(range(122,146))].copy()
+
+            logging.info(f'test df with history shape: {test_df_with_history.shape}')
+
             logging.info("Initiating feature engineering process")
             
             feature_engineering = FeatureEngineering()
             train_df = feature_engineering.derive_features(train_df)
-            test_df = feature_engineering.derive_features(test_df)
+            test_df_with_history = feature_engineering.derive_features(test_df)
+            test_df = test_df_with_history[test_df_with_history['week'].isin(range(136,146))].copy()
 
             logging.info("Feature engineering completed")
 
@@ -97,18 +103,22 @@ class DataTransformation:
             preprocessing_obj = self.get_data_transformer_object()
 
             input_feature_train_df = train_df.drop(columns=['id','num_orders'],axis=1)#x_train
-            # target_feature_train_df = np.log1p(train_df['num_orders'])#y_train
-            target_feature_train_df = train_df['num_orders']#y_train
+            target_feature_train_df = np.log1p(train_df['num_orders'])#y_train
+            # target_feature_train_df = train_df['num_orders']#y_train
 
 
             input_feature_test_df = test_df.drop(columns=['id','num_orders'],axis=1)#x_test
-            # target_feature_test_df = np.log1p(test_df['num_orders'])#y_test
-            target_feature_test_df = test_df['num_orders']#y_test
+            target_feature_test_df = np.log1p(test_df['num_orders'])#y_test
+            # target_feature_test_df = test_df['num_orders']#y_test
 
             logging.info(f"Input feature train df: {input_feature_train_df.head()}")
+            logging.info(f"Input feature train df shape: {input_feature_train_df.shape}")
             logging.info(f"Target feature train df: {target_feature_train_df.head()}")
+            logging.info(f"Target feature train df shape: {target_feature_train_df.shape}")
             logging.info(f"Input feature test df: {input_feature_test_df.head()}")
+            logging.info(f"Input feature test df shape: {input_feature_test_df.shape}")
             logging.info(f"Target feature test df: {target_feature_test_df.head()}")
+            logging.info(f"Target feature test df shape: {target_feature_test_df.shape}")
 
             logging.info("Applying preprocessing object on training and test dataframes")
 

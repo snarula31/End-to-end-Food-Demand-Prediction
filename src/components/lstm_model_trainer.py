@@ -25,7 +25,9 @@ class LSTMModelTrainer:
     
     def __init__(self):
         self.lstm_model_trainer_config = LSTMModelTrainerConfig()
-        self.cat_names = ['category', 'cuisine', 'center_type', 'region_code', 'city_code', 'center_id', 'meal_id']
+        self.cat_names = ['category', 'cuisine', 'center_type', 'region_code', 'city_code', 
+                          'center_id', 'meal_id'
+                          ]
 
     def build_lstm_model(self,window_size,num_dynamic_features,cat_vocab_sizes):
 
@@ -106,6 +108,8 @@ class LSTMModelTrainer:
             )
             
             logging.info("LSTM Training Completed")
+            logging.info("Saving LSTM Model")
+            model.save(self.lstm_model_trainer_config.trained_lstm_model_path)
 
             logging.info("Evaluating LSTM Model")
 
