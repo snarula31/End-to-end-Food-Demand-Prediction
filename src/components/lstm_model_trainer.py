@@ -33,9 +33,9 @@ class LSTMModelTrainer:
 
         input_dynamic = Input(shape=(window_size, num_dynamic_features), name='input_dynamic')
 
-        x_lstm = LSTM(128, return_sequences=True, name='lstm_layer_1')(input_dynamic)
+        x_lstm = LSTM(64, return_sequences=False,activation='tanh', name='lstm_layer_1')(input_dynamic)
         x_lstm = Dropout(0.2)(x_lstm)
-        x_lstm = LSTM(64,return_sequences=False, name='lstm_layer_2')(x_lstm)
+        # x_lstm = LSTM(64,return_sequences=False, name='lstm_layer_2')(x_lstm)
 
         
         inputs_static = [] 
@@ -57,15 +57,15 @@ class LSTMModelTrainer:
 
         combined = Concatenate(name='concat_layer')([x_lstm] + embeddings_list)
 
-        x = Dense(64, activation='relu')(combined)
+        x = Dense(32, activation='relu')(combined)
         x = Dropout(0.2)(x)
-        x = Dense(32, activation='relu')(x)
+        x = Dense(16, activation='relu')(x)
 
         output = Dense(1, activation='linear', name='output')(x)
 
         model = Model(inputs=[input_dynamic] + inputs_static, outputs=output)
 
-        model.compile(optimizer=Adam(learning_rate=0.001), loss=Huber(), metrics=['mae', 'mape'])
+        model.compile(optimizer=Adam(learning_rate=0.001), loss=Huber(), metrics=['mape'])
 
         return model
 
@@ -113,7 +113,7 @@ class LSTMModelTrainer:
 
             logging.info("Evaluating LSTM Model")
 
-            r2,mae,rmse,mape = evaluate_lstm_model(self, model, test_inputs, y_test, history)
+            r2,mae,rmse,mape = evaluate_lstm_model(model, test_inputs, y_test, history)  # Fixed: removed incorrect 'self' parameter
 
 
             return r2,mae,rmse,mape

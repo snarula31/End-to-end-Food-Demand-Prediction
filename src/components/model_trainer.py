@@ -156,4 +156,3 @@ class ModelTrainer:
 # reduce training time further
 # reduce hyperparameter combinations
 
-# try using arima and fb prophet models

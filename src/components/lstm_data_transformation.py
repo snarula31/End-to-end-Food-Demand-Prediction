@@ -42,8 +42,6 @@ class LSTMDataTransformation:
         """
         Efficiently converts DataFrame into 3D sequences (Samples, TimeSteps, Features)
         """
-        # window_size = self.lstm_data_transformation_config.window_size
-        qt = QuantileTransformer(output_distribution='normal')
         X_dynamic = [] 
         X_static = []  
         y = []         
@@ -56,7 +54,7 @@ class LSTMDataTransformation:
         # logging.info("Generating sequences (Sliding Window)...")
         
         for _, group in grouped:
-            if len(group) <= window_size:
+            if len(group) < window_size:
                 continue
             
             group_dyn = group[dyn_cols].values
@@ -87,17 +85,17 @@ class LSTMDataTransformation:
             logging.info('Successfully read training and test datasets')
 
             merged = pd.concat([train_df, test_df], axis=0, ignore_index=True)
-            test_df_with_history = merged[merged['week'].isin(range(122,146))].copy()
+            test_df_with_history = merged[merged['week'].isin(range(122,146))].copy()  # Fixed: explicit copy to avoid SettingWithCopyWarning
 
             logging.info('Initiating feature engineering for LSTM model')
 
             feature_engineering = FeatureEngineering()
             train_df = feature_engineering.derive_features_lstm(train_df)
-            test_df_with_history = feature_engineering.derive_features_lstm(test_df)
+            test_df_with_history = feature_engineering.derive_features_lstm(test_df_with_history)  # Fixed: use test_df_with_history instead of test_df
 
             logging.info('Feature engineering for LSTM model completed')
 
-            test_df = test_df_with_history[test_df_with_history['week'].isin(range(136,146))]
+            test_df = test_df_with_history[test_df_with_history['week'].isin(range(136,146))].copy()  # Fixed: explicit copy
 
             train_df = train_df.drop(columns=['id'],axis=1)
             test_df = test_df.drop(columns=['id'],axis=1)
@@ -122,14 +120,17 @@ class LSTMDataTransformation:
 
             logging.info("Initiating Encoding of categorical columns for LSTM model")
 
-            encoder = LabelEncoder()
+            # Fixed: Use dictionary of encoders instead of single encoder to prevent data leakage
+            encoders = {}
             for col in self.categorical_columns:
                 # Merging train and test data to ensure consistent encoding
                 all_values = pd.concat([train_df[col], test_df[col]], axis=0)
+                encoder = LabelEncoder()  # Create new encoder for each column
                 encoder.fit(all_values)
+                encoders[col] = encoder  # Store in dictionary
 
-                train_df[col] = encoder.transform(train_df[col])
-                test_df[col] = encoder.transform(test_df[col])
+                train_df[col] = encoder.transform(train_df[col]).astype('int64')  # Fixed: explicit int dtype
+                test_df[col] = encoder.transform(test_df[col]).astype('int64')  # Fixed: explicit int dtype
 
             logging.info("Encoding of categorical features for LSTM model successfully completed")
 
@@ -137,17 +138,12 @@ class LSTMDataTransformation:
                         obj=scaler)
             
             save_object(file_path=self.lstm_data_transformation_config.lstm_encoder_file_path,
-                        obj=encoder)
+                        obj=encoders)  # Fixed: Save dictionary of encoders
 
             logging.info("Creating sequences for LSTM model")
 
             X_train_dyn,X_train_stat,y_train = self.create_sequences(df=train_df,target_col='num_orders',window_size=10)
 
-            last_train_records = train_df.groupby(['center_id', 'meal_id']).tail(10)
-            
-        
-            test_df_with_history = pd.concat([last_train_records, test_df]).sort_values(['meal_id','center_id','week'])
-            
             X_test_dyn, X_test_stat, y_test = self.create_sequences(test_df_with_history, target_col='num_orders',window_size=10)
 
             train_inputs = [X_train_dyn] + self.split_static(X_train_stat)

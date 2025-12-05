@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Demand Prediction</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container">
+        <h1>Food Demand Forecasting</h1>
+
+        {% if error %}
+        <div class="error-msg">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <form action="/predict" method="post" class="form-grid">
+            <div class="form-group">
+                <label for="week">Week</label>
+                <input type="number" id="week" name="week" required placeholder="e.g. 146" value="146">
+            </div>
+
+            <div class="form-group">
+                <label for="center_id">Center ID</label>
+                <select id="center_id" name="center_id" required onchange="updateCenterDetails()">
+                    <option value="" disabled selected>Select Center ID</option>
+                    {% for cid in center_ids %}
+                    <option value="{{ cid }}">{{ cid }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="meal_id">Meal ID</label>
+                <select id="meal_id" name="meal_id" required onchange="updateMealDetails()">
+                    <option value="" disabled selected>Select Meal ID</option>
+                    {% for mid in meal_ids %}
+                    <option value="{{ mid }}">{{ mid }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="checkout_price">Checkout Price</label>
+                <input type="number" step="0.01" id="checkout_price" name="checkout_price" required
+                    placeholder="e.g. 136.83">
+            </div>
+
+            <div class="form-group">
+                <label for="base_price">Base Price</label>
+                <input type="number" step="0.01" id="base_price" name="base_price" required placeholder="e.g. 152.29">
+            </div>
+
+            <div class="form-group">
+                <label for="emailer_for_promotion">Emailer for Promotion</label>
+                <select id="emailer_for_promotion" name="emailer_for_promotion">
+                    <option value="0">No</option>
+                    <option value="1">Yes</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="homepage_featured">Homepage Featured</label>
+                <select id="homepage_featured" name="homepage_featured">
+                    <option value="0">No</option>
+                    <option value="1">Yes</option>
+                </select>
+            </div>
+
+            <!-- Auto-filled Fields (Read-Only) -->
+            <div class="form-group">
+                <label for="city_code">City Code</label>
+                <input type="number" id="city_code" name="city_code" required readonly class="readonly-input">
+            </div>
+
+            <div class="form-group">
+                <label for="region_code">Region Code</label>
+                <input type="number" id="region_code" name="region_code" required readonly class="readonly-input">
+            </div>
+
+            <div class="form-group">
+                <label for="center_type">Center Type</label>
+                <input type="text" id="center_type" name="center_type" required readonly class="readonly-input">
+            </div>
+
+            <div class="form-group">
+                <label for="op_area">Op Area</label>
+                <input type="number" step="0.1" id="op_area" name="op_area" required readonly class="readonly-input">
+            </div>
+
+            <div class="form-group">
+                <label for="category">Category</label>
+                <input type="text" id="category" name="category" required readonly class="readonly-input">
+            </div>
+
+            <div class="form-group">
+                <label for="cuisine">Cuisine</label>
+                <input type="text" id="cuisine" name="cuisine" required readonly class="readonly-input">
+            </div>
+
+            <button type="submit" class="submit-btn">Predict Number of Orders</button>
+        </form>
+    </div>
+
+    <!-- Data passed from backend -->
+    <!-- Hidden data container for JS -->
+    <div id="page-data" data-center-info="{{ center_info | tojson | forceescape }}"
+        data-meal-info="{{ meal_info | tojson | forceescape }}" style="display:none;">
+    </div>
+
+    <!-- Data passed from backend -->
+    <script>
+        const dataContainer = document.getElementById('page-data');
+        const centerInfo = JSON.parse(dataContainer.dataset.centerInfo);
+        const mealInfo = JSON.parse(dataContainer.dataset.mealInfo);
+
+        function updateCenterDetails() {
+            const centerId = document.getElementById('center_id').value;
+            const info = centerInfo[centerId];
+
+            if (info) {
+                document.getElementById('city_code').value = info.city_code;
+                document.getElementById('region_code').value = info.region_code;
+                document.getElementById('center_type').value = info.center_type;
+                document.getElementById('op_area').value = info.op_area;
+            }
+        }
+
+        function updateMealDetails() {
+            const mealId = document.getElementById('meal_id').value;
+            const info = mealInfo[mealId];
+
+            if (info) {
+                document.getElementById('category').value = info.category;
+                document.getElementById('cuisine').value = info.cuisine;
+            }
+        }
+    </script>
+</body>
+
+</html>

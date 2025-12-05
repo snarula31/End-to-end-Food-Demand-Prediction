@@ -2,6 +2,11 @@ import os
 import sys
 import numpy as np
 import pandas as pd
+
+from components.feature_engineering import FeatureEngineering
+from components.data_transformation import DataTransformationConfig
+from components.data_transformation import DataTransformation
+
 from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error, mean_absolute_percentage_error
 
 from dataclasses import dataclass
@@ -18,13 +23,23 @@ class ModelPredictions:
     def __init__(self):
         pass
 
-    def initiate_model_predictions(self,test_array):
+    def initiate_model_predictions(self,test_df):
 
         logging.info("loadinng test_df")
 
-        test_df = pd.read_csv('artifacts/test.csv')
-        logging.info(test_df.head(5))
-        logging.info(test_df.shape)
+        # test_df = pd.read_csv('artifacts/test.csv')
+        # final_test_df = pd.read_csv('notebook/data/test.csv')
+        # # final
+        # logging.info(final_test_df.head(5))
+        # logging.info(final_test_df.shape)
+
+        logging.info('fetching preprocessor object')
+
+        preprocessor = load_object(
+            file_path='artifacts/preprocessor.pkl'
+        )
+
+        test_array = preprocessor.transform(test_df)
 
         logging.info("Enter model predictions stage")
         logging.info("Loading test data for predictions")

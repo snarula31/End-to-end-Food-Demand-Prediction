@@ -22,16 +22,6 @@ class FeatureEngineering(BaseEstimator, TransformerMixin):
             
             df['discount_percentage'] = round((df['discount_amount'] / df['base_price']) * 100,4)
             
-            # df['discount_y_n'] = [1 if x > 0 else 0 for x in (df['base_price'] - df['checkout_price'])]
-            
-            # df['weekly_base_price_change'] = round(df.groupby(['meal_id','center_id'])['base_price'].diff().fillna(0),4)
-            
-            # df['weekly_checkout_price_change'] = round(df.groupby(['meal_id','center_id'])['checkout_price'].diff().fillna(0),4)
-            
-            # df['4_week_avg_checkout_price'] = round(df.groupby(['meal_id', 'center_id'])['checkout_price'].transform(lambda x: x.rolling(window=4, min_periods=1).mean()),4)
-
-            # df['4_week_avg_base_price'] = round(df.groupby(['meal_id', 'center_id'])['base_price'].transform(lambda x: x.rolling(window=4, min_periods=1).mean()),4)
-
             df['week_of_year'] = df['week'].apply(lambda x: x % 52 if x % 52 != 0 else 52)
             
             df['quarter'] = df['week_of_year'].apply(lambda x: (x-1) // 13 + 1)

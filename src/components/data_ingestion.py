@@ -23,6 +23,7 @@ class DataIngestionConfig:
     test_data_path: str = os.path.join('artifacts', 'test.csv')
     merged_data_path: str = os.path.join('artifacts', 'merged.csv')
     final_test_data_path: str = os.path.join('artifacts', 'final_test_set.csv')
+    feature_data_path = os.path.join('artifacts', 'feature_data.csv')
 
 class DataIngestion:
     def __init__(self):
@@ -64,7 +65,7 @@ class DataIngestion:
             logging.info("Train test split initiated")
             train_set = data[data['week'].isin(range(1,136))]
             test_set = data[data['week'].isin(range(136,146))]
-            # final_test_set = data[data['week'].isin(range(146,155))]
+            final_test_set = data[data['week'].isin(range(146,155))]
 
             logging.info(f"train set: {train_set.head(5)}")
             logging.info(f"Train set shape: {train_set.shape}")
@@ -82,7 +83,7 @@ class DataIngestion:
             return(
                 self.ingestion_config.train_data_path,
                 self.ingestion_config.test_data_path,
-                # self.ingestion_config.final_test_data_path
+                self.ingestion_config.final_test_data_path
             )
 
         except Exception as e:
@@ -90,16 +91,16 @@ class DataIngestion:
         
 if __name__ == "__main__":
     obj = DataIngestion()
-    train_data,test_data = obj.initiate_data_ingestion()
+    train_data,test_data,final_test_df = obj.initiate_data_ingestion()
 
-    data_transformation = DataTransformation()
-    train_arr,test_arr,_ = data_transformation.initiate_data_transformation(train_data,test_data)
+    # data_transformation = DataTransformation()
+    # train_arr,test_arr,_ = data_transformation.initiate_data_transformation(train_data,test_data)
 
     # model_trainer = ModelTrainer()
     # print(model_trainer.initiate_model_trainer(train_arr,test_arr))
-
+    
     # model_predictions = ModelPredictions()
-    # print(model_predictions.initiate_model_predictions(test_arr))
+    # print(model_predictions.initiate_model_predictions(final_test_df))
 
     lstm_data_transformation = LSTMDataTransformation()
     X_train, y_train, X_test, y_test = lstm_data_transformation.initiate_LSTM_data_transformation(train_data,test_data)

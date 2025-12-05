@@ -87,7 +87,7 @@ class DataTransformation:
             feature_engineering = FeatureEngineering()
             train_df = feature_engineering.derive_features(train_df)
             test_df_with_history = feature_engineering.derive_features(test_df)
-            test_df = test_df_with_history[test_df_with_history['week'].isin(range(136,146))].copy()
+            test_df = test_df_with_history[test_df_with_history['week'].isin(range(135,146))].copy()
 
             logging.info("Feature engineering completed")
 

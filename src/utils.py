@@ -236,7 +236,7 @@ def tune_model_with_optuna(X_train, y_train, models, n_trials=20):
     return report, best_models
     
 
-def evaluate_lstm_model(self, model, X_test, y_test_log, history=None):
+def evaluate_lstm_model(model, X_test, y_test_log, history=None):
     try:
         logging.info("Starting Model Evaluation...")
 
