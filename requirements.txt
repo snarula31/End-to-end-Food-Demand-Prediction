@@ -8,11 +8,8 @@ xgboost
 lightgbm
 tensorflow
 keras
-statsmodels
-prophet
 optuna
 dill
-imbalanced-learn
 fastapi
 uvicorn[standard]
 pydantic
