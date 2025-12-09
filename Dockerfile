@@ -1,7 +1,7 @@
 FROM python:3.9-slim
 
 # Set working directory
-WORKDIR /app
+WORKDIR /app1
 
 # Install system dependencies required for XGBoost/LightGBM and compilation
 RUN apt-get update && apt-get install -y --no-install-recommends \
