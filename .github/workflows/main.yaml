@@ -38,18 +38,18 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y jq unzip
 
-      - name: Free Disk Space (Ubuntu)
-        uses: jlumbroso/free-disk-space@main
-        with:
-          # This action removes pre-installed tools like .NET, Android SDKs, and Haskell
-          # to free up about 10-12 GB of space for your Docker build.
-          tool-cache: true
-          android: true
-          dotnet: true
-          haskell: true
-          large-packages: true
-          docker-images: true
-          swap-storage: true
+      # - name: Free Disk Space (Ubuntu)
+      #   uses: jlumbroso/free-disk-space@main
+      #   with:
+      #     # This action removes pre-installed tools like .NET, Android SDKs, and Haskell
+      #     # to free up about 10-12 GB of space for your Docker build.
+      #     tool-cache: true
+      #     android: true
+      #     dotnet: true
+      #     haskell: true
+      #     large-packages: true
+      #     docker-images: true
+      #     swap-storage: true
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
