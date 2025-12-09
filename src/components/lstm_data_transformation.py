@@ -10,10 +10,10 @@ import tensorflow as tf
 import pickle
 from dataclasses import dataclass
 
-from logger import logging
-from exception import CustomException
-from components.feature_engineering import FeatureEngineering
-from utils import save_object
+from src.logger import logging
+from src.exception import CustomException
+from src.components.feature_engineering import FeatureEngineering
+from src.utils import save_object
 
 @dataclass
 class LSTMDataTransformationConfig:

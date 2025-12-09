@@ -4,18 +4,18 @@ import numpy as np
 import pandas as pd
 
 from dataclasses import dataclass
-from exception import CustomException
-from logger import logging
+from src.exception import CustomException
+from src.logger import logging
 
-from components.data_transformation import DataTransformationConfig
-from components.data_transformation import DataTransformation
-from components.model_trainer import ModelTrainerConfig
-from components.model_trainer import ModelTrainer
-from components.model_predictions import ModelPredictions
-from components.lstm_data_transformation import LSTMDataTransformationConfig
-from components.lstm_data_transformation import LSTMDataTransformation
-from components.lstm_model_trainer import LSTMModelTrainerConfig
-from components.lstm_model_trainer import LSTMModelTrainer
+# from components.data_transformation import DataTransformationConfig
+# from components.data_transformation import DataTransformation
+# from components.model_trainer import ModelTrainerConfig
+# from components.model_trainer import ModelTrainer
+# from components.model_predictions import ModelPredictions
+# from components.lstm_data_transformation import LSTMDataTransformationConfig
+# from components.lstm_data_transformation import LSTMDataTransformation
+# from components.lstm_model_trainer import LSTMModelTrainerConfig
+# from components.lstm_model_trainer import LSTMModelTrainer
 
 @dataclass
 class DataIngestionConfig:
@@ -89,21 +89,21 @@ class DataIngestion:
         except Exception as e:
             raise CustomException(e, sys)
         
-if __name__ == "__main__":
-    obj = DataIngestion()
-    train_data,test_data,final_test_df = obj.initiate_data_ingestion()
+# if __name__ == "__main__":
+#     obj = DataIngestion()
+#     train_data,test_data,final_test_df = obj.initiate_data_ingestion()
 
-    # data_transformation = DataTransformation()
-    # train_arr,test_arr,_ = data_transformation.initiate_data_transformation(train_data,test_data)
+#     # data_transformation = DataTransformation()
+#     # train_arr,test_arr,_ = data_transformation.initiate_data_transformation(train_data,test_data)
 
-    # model_trainer = ModelTrainer()
-    # print(model_trainer.initiate_model_trainer(train_arr,test_arr))
+#     # model_trainer = ModelTrainer()
+#     # print(model_trainer.initiate_model_trainer(train_arr,test_arr))
     
-    # model_predictions = ModelPredictions()
-    # print(model_predictions.initiate_model_predictions(final_test_df))
+#     # model_predictions = ModelPredictions()
+#     # print(model_predictions.initiate_model_predictions(final_test_df))
 
-    lstm_data_transformation = LSTMDataTransformation()
-    X_train, y_train, X_test, y_test = lstm_data_transformation.initiate_LSTM_data_transformation(train_data,test_data)
+#     lstm_data_transformation = LSTMDataTransformation()
+#     X_train, y_train, X_test, y_test = lstm_data_transformation.initiate_LSTM_data_transformation(train_data,test_data)
 
-    lstm_trainer = LSTMModelTrainer()
-    print(lstm_trainer.initiate_lstm_model_training(X_train, y_train, X_test, y_test))
+#     lstm_trainer = LSTMModelTrainer()
+#     print(lstm_trainer.initiate_lstm_model_training(X_train, y_train, X_test, y_test))

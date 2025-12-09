@@ -2,7 +2,6 @@ import os
 import sys
 
 import numpy as np
-from scipy.stats import randint, uniform
 
 from dataclasses import dataclass
 from sklearn.linear_model import LinearRegression
@@ -13,9 +12,9 @@ from lightgbm import LGBMRegressor
 
 from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error, mean_absolute_percentage_error
 
-from exception import CustomException
-from logger import logging
-from utils import save_object,evaluate_models,objective,tune_model_with_optuna
+from src.exception import CustomException
+from src.logger import logging
+from src.utils import save_object,tune_model_with_optuna
 
 @dataclass
 class ModelTrainerConfig:
@@ -129,30 +128,4 @@ class ModelTrainer:
             # pass
         except Exception as e:
             raise CustomException(e, sys) from e
-
-        
-#  check categorical columns again. specifically emailer_for_promotion and homepage_featured - DONE
-# add more features if possible -  DONE
-# check for any null values - DONE
-# optimize the hyperparameters for all models - ONGOING
-#  improve models predicitions - ONGOING
-
-# find solution for training time - DONE (using GPU based training for some models) REDUCED TO 1.5 - 2 HOURS FROM 5+ HOURS)
-
-# run the optimized training set
-
-
-# add new features to improve model performance
-# -> change categorical encoding technique, if new columns added
-# use bayesian optimization for hyperparameter tuning (OPTUNA)
-# further reduce model training time 
-# -> find a fix for long training time of xgboost even on GPU
-#  use different transformation techniques for target variable to make it a normal distribution (quantile transformation)
-# check implentaion od ewma on google ai studio
-# fix features using expanding window technique
-
-
-
-# reduce training time further
-# reduce hyperparameter combinations
 

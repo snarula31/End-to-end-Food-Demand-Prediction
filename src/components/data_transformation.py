@@ -2,10 +2,6 @@ import os
 import sys
 from dataclasses import dataclass
 
-from exception import CustomException
-from logger import logging
-from utils import save_object
-
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
@@ -14,8 +10,11 @@ from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 import category_encoders as ce
 
+from src.components.feature_engineering import FeatureEngineering
 
-from components.feature_engineering import FeatureEngineering
+from src.exception import CustomException
+from src.logger import logging
+from src.utils import save_object
 
 @dataclass
 class DataTransformationConfig:

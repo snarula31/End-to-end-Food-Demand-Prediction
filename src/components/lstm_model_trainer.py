@@ -13,9 +13,9 @@ from keras.layers import Input, Embedding, LSTM, Dense, Concatenate, Flatten, Dr
 from keras.callbacks import EarlyStopping, ReduceLROnPlateau,ModelCheckpoint
 from keras.optimizers import Adam
 
-from exception import CustomException
-from logger import logging
-from utils import evaluate_lstm_model
+from src.exception import CustomException
+from src.logger import logging
+from src.utils import evaluate_lstm_model
 
 @dataclass
 class LSTMModelTrainerConfig:

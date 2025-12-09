@@ -5,9 +5,9 @@ import numpy as np
 
 from src.components.feature_engineering import FeatureEngineering
 
-from logger import logging
-from exception import CustomException
-from utils import load_object
+from src.logger import logging
+from src.exception import CustomException
+from src.utils import load_object
 
 class PredictPipeline:
     def __init__(self):

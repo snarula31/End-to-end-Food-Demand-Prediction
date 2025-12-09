@@ -18,8 +18,8 @@ from xgboost import XGBRegressor
 from catboost import CatBoostRegressor
 from lightgbm import LGBMRegressor
 
-from logger import logging
-from exception import CustomException
+from src.logger import logging
+from src.exception import CustomException
 
 def save_object(file_path, obj):
     try:

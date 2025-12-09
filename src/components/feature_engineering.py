@@ -4,8 +4,8 @@ import pandas as pd
 import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
 
-from exception import CustomException
-from logger import logging
+from src.exception import CustomException
+from src.logger import logging
 
 class FeatureEngineering(BaseEstimator, TransformerMixin):
     def __init__(self):

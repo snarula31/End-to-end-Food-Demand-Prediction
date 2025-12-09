@@ -3,16 +3,16 @@ import sys
 import numpy as np
 import pandas as pd
 
-from components.feature_engineering import FeatureEngineering
-from components.data_transformation import DataTransformationConfig
-from components.data_transformation import DataTransformation
+from src.components.feature_engineering import FeatureEngineering
+from src.components.data_transformation import DataTransformationConfig
+from src.components.data_transformation import DataTransformation
 
 from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error, mean_absolute_percentage_error
 
 from dataclasses import dataclass
-from exception import CustomException
-from logger import logging
-from utils import save_object, load_object
+from src.exception import CustomException
+from src.logger import logging
+from src.utils import save_object, load_object
 
 # @dataclass
 # class ModelPredictionsConfig:
