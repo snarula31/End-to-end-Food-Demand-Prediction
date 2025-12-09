@@ -13,5 +13,4 @@ uvicorn[standard]
 pydantic
 python-multipart
 flask
-streamlit
 # -e .
