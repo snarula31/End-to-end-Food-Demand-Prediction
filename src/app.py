@@ -83,8 +83,8 @@ async def predict(
         pred_df = data.get_data_as_data_frame()
         print(f"Prediction DataFrame:\n{pred_df}")
 
-        pred_df = data.get_data_as_data_frame()
-        print(f"Prediction DataFrame:\n{pred_df}")
+        # pred_df = data.get_data_as_data_frame()
+        # print(f"Prediction DataFrame:\n{pred_df}")
 
         # pipeline is already initialized globally
         results = pipeline.predict(pred_df)
