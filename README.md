@@ -92,7 +92,7 @@ Open your browser and navigate to `http://localhost:8000` to access the predicti
    ```
 
 ## 📈 Model Performance
-The models were rigorously evaluated using multiple metrics. The **CatBoost Logic** and **LSTM** models showed promising results in capturing the demand trends.
+The models were rigorously evaluated using multiple metrics.
 
 ### Key Metrics:
 - **Root Mean Squared Error (RMSE)**
