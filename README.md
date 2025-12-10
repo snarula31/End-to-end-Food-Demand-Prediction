@@ -5,6 +5,8 @@ The **Food Demand Forecasting** project aims to predict the demand for food item
 
 The project utilizes both **Traditional Machine Learning** algorithms (XGBoost, CatBoost, LightGBM) and **Deep Learning** techniques (LSTM with Entity Embeddings) to achieve high-accuracy predictions. It serves the final model via a **FastAPI** web application and is containerized using **Docker** for easy deployment.
 
+Live link: http://13.203.27.255:8000/
+
 ## 🚀 Key Features
 - **Data Ingestion & Processing**: Automated pipeline to merge, clean, and transform raw CSV data.
 - **Advanced Feature Engineering**: Creation of time-series features and handling of categorical variables.
